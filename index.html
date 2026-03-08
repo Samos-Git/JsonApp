@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Samos Planning v2.0</title>
+<title>Samos Planning v2.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -230,7 +230,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <header>
   <div class="logo">Samos<span>◆</span>Planning</div>
-  <span class="version-badge">v2.0</span>
+  <span class="version-badge">v2.1</span>
   <div class="header-center">
     <input class="doc-title-input" id="docTitle" type="text" placeholder="Nom du document…" value="Samos — Été 2025">
   </div>
@@ -325,7 +325,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  var VERSION = '2.0';
+  var VERSION = '2.1';
 
   /* ── state ── */
   var blocks = [];
@@ -490,7 +490,7 @@ document.addEventListener("DOMContentLoaded", function() {
         '<button class="block-action-btn" data-action="dup" data-id="' + b.id + '">⎘</button>' +
         '<button class="block-action-btn del" data-action="del" data-id="' + b.id + '">✕</button>' +
         '</div></div>' +
-        '<div class="block-body' + (on ? '' : ' collapsed') + '">' + fields(b) + '</div>' +
+        '<div class="block-body' + (on ? '' : ' collapsed') + '">' + fields(b) + '<button class="btn-validate" data-action="validate" data-id="' + b.id + '">Valider</button></div>' +
         '</div>';
     }
     list.innerHTML = html;
@@ -507,6 +507,15 @@ document.addEventListener("DOMContentLoaded", function() {
         var id = el.getAttribute('data-id');
         e.stopPropagation();
         if (a === 'toggle') setActive(id);
+        if (a === 'validate') {
+          sync();
+          // Flash the button green briefly
+          var vBtn = document.querySelector('.btn-validate[data-id="' + id + '"]');
+          if (vBtn) {
+            vBtn.classList.add('saved');
+            setTimeout(function() { if (vBtn) vBtn.classList.remove('saved'); }, 1200);
+          }
+        }
         if (a === 'del')    delBlock(id);
         if (a === 'dup')    dupBlock(id);
         if (a === 'up')     moveBlock(id, -1);
