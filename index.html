@@ -3,171 +3,250 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JSON Builder — Moteur de Rendu Universel</title>
+<title>Samos Planning v1.7</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #f5f3ef; --surface: #fff; --surface2: #f0ede8;
-    --border: #ddd9d0; --border-strong: #c8c2b8;
-    --accent: #c8860a; --accent2: #d44f1e; --accent-light: rgba(200,134,10,0.1);
-    --text: #1a1714; --text-muted: #7a736a; --text-dim: #b0a89e;
-    --radius: 4px;
-    --font-display: 'Playfair Display', serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-mono: 'DM Mono', monospace;
-    --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
-  }
-  body { font-family: var(--font-body); background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f3ef;
+  --surface: #fff;
+  --surface2: #f0ede8;
+  --border: #ddd9d0;
+  --border-strong: #c8c2b8;
+  --accent: #c8860a;
+  --accent2: #d44f1e;
+  --accent-light: rgba(200,134,10,0.1);
+  --text: #1a1714;
+  --text-muted: #7a736a;
+  --text-dim: #b0a89e;
+  --radius: 4px;
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
+}
+body { font-family:var(--font-body); background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 
-  /* HEADER */
-  header { display:flex; align-items:center; justify-content:space-between; padding:0 24px; height:54px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; gap:16px; box-shadow:0 1px 0 var(--border); }
-  .logo { font-family:var(--font-display); font-size:18px; font-weight:900; letter-spacing:-0.5px; color:var(--text); white-space:nowrap; }
-  .logo span { color:var(--accent); }
-  .header-center { display:flex; align-items:center; gap:8px; flex:1; max-width:400px; }
-  .doc-title-input { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--font-body); font-size:13px; padding:6px 12px; border-radius:var(--radius); width:100%; outline:none; transition:border-color .2s; }
-  .doc-title-input:focus { border-color:var(--accent); background:#fff; }
-  .header-actions { display:flex; gap:8px; align-items:center; }
-  .btn { padding:7px 14px; border-radius:var(--radius); font-family:var(--font-body); font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; letter-spacing:.3px; white-space:nowrap; }
-  .btn-ghost { background:transparent; border:1px solid var(--border-strong); color:var(--text-muted); }
-  .btn-ghost:hover { border-color:var(--text-muted); color:var(--text); background:var(--surface2); }
-  .btn-accent { background:var(--accent); color:#fff; font-weight:700; }
-  .btn-accent:hover { background:#b07508; transform:translateY(-1px); box-shadow:0 4px 12px rgba(200,134,10,.3); }
+/* ── HEADER ── */
+header { display:flex; align-items:center; padding:0 20px; height:52px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; gap:12px; }
+.logo { font-family:var(--font-display); font-size:17px; font-weight:900; letter-spacing:-.5px; color:var(--text); white-space:nowrap; }
+.logo span { color:var(--accent); }
+.version-badge { font-family:var(--font-mono); font-size:10px; color:var(--text-dim); background:var(--surface2); border:1px solid var(--border); padding:2px 7px; border-radius:10px; flex-shrink:0; }
+.header-center { flex:1; max-width:360px; }
+.doc-title-input { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--font-body); font-size:13px; padding:6px 12px; border-radius:var(--radius); width:100%; outline:none; transition:border-color .2s; }
+.doc-title-input:focus { border-color:var(--accent); background:#fff; }
+.header-actions { display:flex; gap:6px; align-items:center; margin-left:auto; }
+.btn { padding:6px 13px; border-radius:var(--radius); font-family:var(--font-body); font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; white-space:nowrap; }
+.btn-ghost { background:transparent; border:1px solid var(--border-strong); color:var(--text-muted); }
+.btn-ghost:hover { border-color:var(--text-muted); color:var(--text); background:var(--surface2); }
+.btn-accent { background:var(--accent); color:#fff; font-weight:700; }
+.btn-accent:hover { background:#b07508; }
+.btn-danger { background:transparent; border:1px solid #e0c0c0; color:#c04418; }
+.btn-danger:hover { background:rgba(212,79,30,.08); }
 
-  /* LAYOUT */
-  .app { display:grid; grid-template-columns:260px 1fr 380px; flex:1; overflow:hidden; }
+/* ── LAYOUT ── */
+.app { display:grid; grid-template-columns:255px 1fr 375px; flex:1; overflow:hidden; }
 
-  /* SIDEBAR */
-  .sidebar { border-right:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow:hidden; }
-  .sidebar-header { padding:14px 16px; border-bottom:1px solid var(--border); font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); background:var(--surface2); }
-  .block-palette { padding:10px; display:flex; flex-direction:column; gap:5px; overflow-y:auto; }
-  .palette-group-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); padding:8px 4px 3px; font-weight:600; }
-  .palette-item { display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; transition:all .15s; background:var(--surface); user-select:none; }
-  .palette-item:hover { border-color:var(--accent); background:var(--accent-light); transform:translateX(2px); }
-  .palette-icon { width:26px; height:26px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
-  .palette-info { flex:1; min-width:0; }
-  .palette-name { font-size:12px; font-weight:500; color:var(--text); }
-  .palette-desc { font-size:10px; color:var(--text-muted); margin-top:1px; }
+/* ── SIDEBAR ── */
+.sidebar { border-right:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow:hidden; }
+.sidebar-header { padding:12px 14px; border-bottom:1px solid var(--border); font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); background:var(--surface2); }
+.block-palette { padding:8px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; }
+.palette-group-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); padding:8px 4px 3px; font-weight:600; }
+.palette-item { display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; transition:all .15s; background:var(--surface); user-select:none; }
+.palette-item:hover { border-color:var(--accent); background:var(--accent-light); transform:translateX(2px); }
+.palette-item:active { transform:translateX(0) scale(.98); }
+.palette-icon { width:26px; height:26px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+.palette-info { flex:1; min-width:0; }
+.palette-name { font-size:12px; font-weight:500; color:var(--text); }
+.palette-desc { font-size:10px; color:var(--text-muted); margin-top:1px; }
 
-  /* EDITOR */
-  .editor { display:flex; flex-direction:column; overflow:hidden; background:var(--bg); }
-  .editor-toolbar { display:flex; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid var(--border); background:var(--surface); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
-  .block-count { margin-left:auto; font-family:var(--font-mono); font-size:11px; color:var(--text-dim); }
-  .blocks-list { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:8px; }
-  .empty-state { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--text-dim); gap:12px; text-align:center; padding:40px; }
-  .empty-state .icon { font-size:48px; opacity:.3; }
-  .empty-state h3 { font-family:var(--font-display); font-size:20px; color:var(--text-muted); }
-  .empty-state p { font-size:13px; line-height:1.6; max-width:280px; color:var(--text-muted); }
+/* ── EDITOR ── */
+.editor { display:flex; flex-direction:column; overflow:hidden; background:var(--bg); }
+.editor-toolbar { display:flex; align-items:center; padding:9px 14px; border-bottom:1px solid var(--border); background:var(--surface); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+.block-count { margin-left:auto; font-family:var(--font-mono); font-size:11px; color:var(--text-dim); }
+.editor-body { flex:1; overflow:hidden; position:relative; display:flex; flex-direction:column; }
+.empty-state { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--text-dim); gap:10px; text-align:center; padding:40px; pointer-events:none; z-index:1; }
+.empty-state .icon { font-size:40px; opacity:.25; }
+.empty-state h3 { font-family:var(--font-display); font-size:18px; color:var(--text-muted); }
+.empty-state p { font-size:12px; line-height:1.6; max-width:240px; color:var(--text-muted); }
+.blocks-list { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:7px; position:relative; z-index:2; }
 
-  /* BLOCK CARD */
-  .block-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; overflow:hidden; transition:all .15s; animation:slideIn .2s ease; box-shadow:var(--shadow); }
-  @keyframes slideIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
-  .block-card:hover { border-color:var(--border-strong); }
-  .block-card.active { border-color:var(--accent); box-shadow:0 0 0 2px rgba(200,134,10,.15); }
-  .block-header { display:flex; align-items:center; gap:8px; padding:8px 10px; cursor:pointer; border-bottom:1px solid transparent; transition:border-color .15s; background:var(--surface2); }
-  .block-card.active .block-header { border-bottom-color:var(--border); }
-  .block-handle { color:var(--text-dim); font-size:12px; padding:0 2px; }
-  .block-type-badge { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; padding:2px 7px; border-radius:2px; font-weight:600; font-family:var(--font-mono); }
-  .block-preview-text { flex:1; font-size:12px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .block-actions { display:flex; gap:2px; opacity:0; transition:opacity .15s; }
-  .block-card:hover .block-actions { opacity:1; }
-  .block-action-btn { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:3px 7px; border-radius:3px; font-size:13px; transition:all .1s; }
-  .block-action-btn:hover { background:var(--border); color:var(--text); }
-  .block-action-btn.del:hover { background:rgba(212,79,30,.12); color:var(--accent2); }
-  .block-body { padding:12px; display:flex; flex-direction:column; gap:8px; }
-  .block-body.collapsed { display:none; }
+/* ── BLOCK CARD ── */
+.block-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; overflow:hidden; transition:border-color .15s; animation:slideIn .18s ease; box-shadow:var(--shadow); }
+@keyframes slideIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+.block-card:hover { border-color:var(--border-strong); }
+.block-card.active { border-color:var(--accent); box-shadow:0 0 0 2px rgba(200,134,10,.12); }
+.block-header { display:flex; align-items:center; gap:8px; padding:8px 10px; cursor:pointer; border-bottom:1px solid transparent; background:var(--surface2); transition:border-color .1s; }
+.block-card.active .block-header { border-bottom-color:var(--border); }
+.block-handle { color:var(--text-dim); font-size:12px; }
+.block-type-badge { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; padding:2px 7px; border-radius:2px; font-weight:600; font-family:var(--font-mono); flex-shrink:0; }
+.block-preview-text { flex:1; font-size:12px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.block-actions { display:flex; gap:1px; opacity:0; transition:opacity .12s; flex-shrink:0; }
+.block-card:hover .block-actions { opacity:1; }
+.block-action-btn { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:3px 7px; border-radius:3px; font-size:13px; line-height:1; transition:all .1s; }
+.block-action-btn:hover { background:var(--border); color:var(--text); }
+.block-action-btn.del:hover { background:rgba(212,79,30,.12); color:var(--accent2); }
+.block-body { padding:12px; display:flex; flex-direction:column; gap:8px; }
+.block-body.collapsed { display:none; }
+.field-group { display:flex; flex-direction:column; gap:3px; }
+.field-label { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); font-weight:600; }
+.field-input, .field-textarea { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--font-body); font-size:13px; padding:7px 10px; border-radius:var(--radius); outline:none; transition:border-color .15s,background .15s; width:100%; }
+.field-input:focus, .field-textarea:focus { border-color:var(--accent); background:#fff; }
+.field-textarea { resize:vertical; min-height:66px; line-height:1.5; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 
-  /* FIELDS */
-  .field-group { display:flex; flex-direction:column; gap:4px; }
-  .field-label { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); font-weight:600; }
-  .field-input, .field-textarea { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--font-body); font-size:13px; padding:7px 10px; border-radius:var(--radius); outline:none; transition:border-color .2s,background .2s; width:100%; }
-  .field-input:focus, .field-textarea:focus { border-color:var(--accent); background:#fff; }
-  .field-textarea { resize:vertical; min-height:68px; line-height:1.5; }
-  .field-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+/* block type colors */
+.type-day         { background:rgba(212,79,30,.12);  color:#c04418; }
+.type-hour        { background:rgba(30,100,200,.1);  color:#2060c8; }
+.type-description { background:rgba(30,160,80,.1);   color:#1a9050; }
+.type-link        { background:rgba(120,60,200,.1);  color:#7830c8; }
+.type-image       { background:rgba(200,80,150,.1);  color:#c83090; }
 
-  /* BLOCK TYPE COLORS */
-  .type-main-title  { background:rgba(200,134,10,.12); color:#b07508; }
-  .type-day         { background:rgba(212,79,30,.12);  color:#c04418; }
-  .type-hour        { background:rgba(30,100,200,.1);  color:#2060c8; }
-  .type-description { background:rgba(30,160,80,.1);   color:#1a9050; }
-  .type-link        { background:rgba(120,60,200,.1);  color:#7830c8; }
-  .type-image       { background:rgba(200,80,150,.1);  color:#c83090; }
+/* ── JSON PANEL ── */
+.json-panel { border-left:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow:hidden; }
+.json-tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface2); }
+.json-tab { padding:11px 16px; font-size:11px; font-weight:600; letter-spacing:.5px; cursor:pointer; border:none; background:none; color:var(--text-muted); border-bottom:2px solid transparent; transition:all .12s; }
+.json-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:var(--surface); }
+.json-tab:hover:not(.active) { color:var(--text); }
+.json-content { flex:1; overflow:auto; background:#1e1e2e; }
+.json-code { font-family:var(--font-mono); font-size:11px; line-height:1.75; padding:14px; color:#a0a8c0; white-space:pre; min-height:100%; }
+.json-code .key  { color:#7ec8e3; }
+.json-code .str  { color:#a8e6a3; }
+.json-code .num  { color:#f0c66a; }
+.json-code .bool { color:#ff9060; }
+.json-code .null { color:#888; }
+.panel-actions { flex-shrink:0; padding:10px 12px; background:var(--surface); border-top:1px solid var(--border); display:flex; gap:6px; }
 
-  /* JSON PANEL */
-  .json-panel { border-left:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow:hidden; }
-  .json-tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface2); }
-  .json-tab { padding:12px 18px; font-size:11px; font-weight:600; letter-spacing:.5px; cursor:pointer; border:none; background:none; color:var(--text-muted); border-bottom:2px solid transparent; transition:all .15s; }
-  .json-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:var(--surface); }
-  .json-tab:hover:not(.active) { color:var(--text); }
-  .json-content { flex:1; overflow:auto; background:#1e1e2e; }
-  .json-code { font-family:var(--font-mono); font-size:11.5px; line-height:1.75; padding:16px; color:#a0a8c0; white-space:pre; min-height:100%; }
-  .json-code .key{color:#7ec8e3} .json-code .str{color:#a8e6a3} .json-code .num{color:#f0c66a} .json-code .bool{color:#ff9060} .json-code .null{color:#888}
-  .copy-btn { flex-shrink:0; padding:10px 12px; background:var(--surface); border-top:1px solid var(--border); display:flex; gap:8px; }
+/* ── PREVIEW ── */
+.preview-wrap { overflow-y:auto; font-family:var(--font-body); background:var(--bg); height:100%; }
 
-  /* PREVIEW */
-  .preview-content { overflow-y:auto; font-family:var(--font-body); background:var(--bg); height:100%; }
-  .preview-main-title-block { background:var(--surface); padding:32px 28px 24px; border-bottom:3px solid var(--accent); }
-  .preview-main-title { font-family:var(--font-display); font-size:36px; font-weight:900; color:var(--text); line-height:1.15; letter-spacing:-.5px; }
-  .preview-main-subtitle { margin-top:6px; font-size:14px; color:var(--text-muted); font-weight:300; }
-  .preview-day-block { background:var(--text); padding:16px 28px; }
-  .preview-day-label { font-family:var(--font-display); font-size:24px; font-weight:700; color:#fff; letter-spacing:-.3px; }
-  .preview-day-date { font-family:var(--font-mono); font-size:11px; color:var(--accent); letter-spacing:1px; margin-top:3px; text-transform:capitalize; }
-  .preview-timeline { padding-bottom:4px; }
-  .preview-row { display:grid; grid-template-columns:80px 1fr; border-bottom:1px solid var(--border); }
-  .preview-row:last-child { border-bottom:none; }
-  .preview-col-time { padding:12px 10px 12px 0; border-right:2px solid var(--border); display:flex; align-items:flex-start; justify-content:flex-end; background:var(--surface); position:relative; }
-  .preview-col-time::after { content:''; position:absolute; right:-5px; top:16px; width:8px; height:8px; background:var(--accent); border-radius:50%; border:2px solid var(--bg); }
-  .preview-time-text { font-family:var(--font-mono); font-size:12px; font-weight:500; color:var(--accent); letter-spacing:.5px; text-align:right; line-height:1.3; }
-  .preview-time-duration { display:block; font-size:9px; color:var(--text-dim); }
-  .preview-col-content { padding:10px 14px; display:flex; flex-direction:column; gap:6px; }
-  .preview-description { font-size:13px; color:var(--text-muted); line-height:1.6; }
-  .preview-link { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--accent); text-decoration:none; border:1px solid rgba(200,134,10,.3); padding:3px 10px; border-radius:2px; font-family:var(--font-mono); width:fit-content; transition:background .15s; }
-  .preview-link:hover { background:var(--accent-light); }
-  .preview-image { width:100%; max-height:140px; object-fit:cover; border-radius:3px; border:1px solid var(--border); }
-  .preview-image-caption { font-size:10px; color:var(--text-dim); font-style:italic; }
-  .preview-image-placeholder { width:100%; height:70px; background:var(--surface2); border:1px dashed var(--border-strong); border-radius:3px; display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:11px; }
-  .preview-orphan { padding:10px 14px 10px 28px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:5px; }
+/* Day block — full-width dark band */
+.pv-day {
+  background: var(--text);
+  padding: 14px 22px;
+  margin-top: 24px;
+}
+.pv-day:first-child { margin-top: 0; }
 
-  ::-webkit-scrollbar{width:5px;height:5px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px} ::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
+/* Date large + label inline */
+.pv-day-header { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.pv-day-date {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: capitalize;
+}
+.pv-day-sep { color: rgba(255,255,255,0.25); font-size:16px; line-height:1; }
+.pv-day-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.2px;
+}
 
-  /* MODAL */
-  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; z-index:1000; opacity:0; pointer-events:none; transition:opacity .2s; backdrop-filter:blur(2px); }
-  .modal-overlay.show { opacity:1; pointer-events:all; }
-  .modal { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:24px; width:90%; max-width:500px; transform:translateY(10px); transition:transform .2s; box-shadow:0 20px 60px rgba(0,0,0,.2); }
-  .modal-overlay.show .modal { transform:translateY(0); }
-  .modal h3 { font-family:var(--font-display); font-size:20px; margin-bottom:16px; color:var(--text); }
-  .modal-actions { display:flex; gap:8px; margin-top:16px; justify-content:flex-end; }
-  .import-textarea { width:100%; height:200px; background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--font-mono); font-size:12px; padding:12px; border-radius:var(--radius); outline:none; resize:none; }
-  .import-textarea:focus { border-color:var(--accent); }
-  .import-error { color:var(--accent2); font-size:12px; margin-top:8px; }
-  .toast { position:fixed; bottom:24px; right:24px; background:var(--text); color:#fff; font-weight:600; font-size:12px; padding:10px 18px; border-radius:4px; transform:translateY(60px); opacity:0; transition:all .3s; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.2); }
-  .toast.show { transform:translateY(0); opacity:1; }
+/* Timeline — indented under the day band */
+.pv-timeline {
+  margin-left: 28px;
+  border-left: 2px solid var(--border-strong);
+}
+
+/* Each hour row: time col | content col */
+.pv-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.pv-row:last-child { border-bottom: none; }
+
+.pv-time {
+  padding: 10px 10px 10px 0;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  background: var(--surface);
+  position: relative;
+}
+/* dot on the left border of timeline */
+.pv-time::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 14px;
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+}
+.pv-time-val { font-family:var(--font-mono); font-size:12px; font-weight:500; color:var(--accent); }
+.pv-time-dur { font-family:var(--font-mono); font-size:9px; color:var(--text-dim); margin-top:1px; }
+
+.pv-content { padding:10px 14px; display:flex; flex-direction:column; gap:5px; background:var(--bg); }
+
+.pv-description { font-size:13px; color:var(--text-muted); line-height:1.6; }
+.pv-link { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--accent); text-decoration:none; border:1px solid rgba(200,134,10,.3); padding:3px 10px; border-radius:2px; font-family:var(--font-mono); width:fit-content; }
+.pv-link:hover { background:var(--accent-light); }
+.pv-img { width:100%; max-height:130px; object-fit:cover; border-radius:3px; border:1px solid var(--border); }
+.pv-img-caption { font-size:10px; color:var(--text-dim); font-style:italic; }
+.pv-img-ph { width:100%; height:60px; background:var(--surface2); border:1px dashed var(--border-strong); border-radius:3px; display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:11px; }
+.pv-orphan { padding:10px 14px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:5px; background:var(--bg); }
+
+/* ── SCROLLBARS ── */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:3px; }
+
+/* ── MODAL ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .2s; }
+.modal-overlay.show { opacity:1; pointer-events:all; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:22px; width:90%; max-width:480px; transform:translateY(8px); transition:transform .2s; box-shadow:0 16px 48px rgba(0,0,0,.18); }
+.modal-overlay.show .modal { transform:translateY(0); }
+.modal h3 { font-family:var(--font-display); font-size:19px; margin-bottom:14px; color:var(--text); }
+.modal-actions { display:flex; gap:8px; margin-top:14px; justify-content:flex-end; }
+.import-error { color:var(--accent2); font-size:12px; margin-top:6px; min-height:16px; }
+.drop-zone { border:2px dashed var(--border-strong); border-radius:6px; padding:28px 20px; text-align:center; cursor:pointer; transition:all .15s; background:var(--surface2); position:relative; }
+.drop-zone:hover, .drop-zone.dragover { border-color:var(--accent); background:var(--accent-light); }
+.drop-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.drop-zone-icon { font-size:28px; margin-bottom:8px; }
+.drop-zone-label { font-size:13px; color:var(--text-muted); }
+.drop-zone-sub { font-size:11px; color:var(--text-dim); margin-top:4px; }
+.drop-zone.file-ok { border-color:var(--accent); background:rgba(200,134,10,.06); }
+.drop-zone.file-ok .drop-zone-label { color:var(--accent); font-weight:600; }
+
+/* ── TOAST ── */
+.toast { position:fixed; bottom:20px; right:20px; background:var(--text); color:#fff; font-weight:600; font-size:12px; padding:9px 16px; border-radius:4px; transform:translateY(50px); opacity:0; transition:all .25s; z-index:9999; pointer-events:none; }
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.ok  { background:#1a7a40; }
+.toast.err { background:#c04418; }
+
+#clipboardHelper { position:fixed; left:-9999px; top:0; opacity:0; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">JSON<span>◆</span>Builder</div>
+  <div class="logo">Samos<span>◆</span>Planning</div>
+  <span class="version-badge">v1.7</span>
   <div class="header-center">
-    <input class="doc-title-input" id="docTitle" type="text" placeholder="Nom du document…" value="Planning Vacances Été 2025">
+    <input class="doc-title-input" id="docTitle" type="text" placeholder="Nom du document…" value="Samos — Été 2025">
   </div>
   <div class="header-actions">
-    <button class="btn btn-ghost" id="btnImport">⬆ Importer JSON</button>
-    <button class="btn btn-ghost" id="btnClear">✕ Vider</button>
+    <button class="btn btn-ghost" id="btnImport">⬆ Importer</button>
+    <button class="btn btn-danger" id="btnClear">✕ Vider</button>
     <button class="btn btn-accent" id="btnExport">⬇ Exporter JSON</button>
   </div>
 </header>
 
 <div class="app">
+
   <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sidebar-header">Blocs disponibles</div>
     <div class="block-palette" id="palette">
       <div class="palette-group-label">Structure</div>
-      <div class="palette-item" data-add="main-title">
-        <div class="palette-icon type-main-title">❶</div>
-        <div class="palette-info"><div class="palette-name">Titre Principal</div><div class="palette-desc">H1 — En-tête du document</div></div>
-      </div>
       <div class="palette-item" data-add="day">
         <div class="palette-icon type-day">📅</div>
         <div class="palette-info"><div class="palette-name">Jour</div><div class="palette-desc">Section de journée</div></div>
@@ -198,12 +277,13 @@
       <span>✦ Éditeur de blocs</span>
       <span class="block-count" id="blockCount">0 bloc(s)</span>
     </div>
-    <div class="blocks-list" id="blocksList">
+    <div class="editor-body">
       <div class="empty-state" id="emptyState">
         <div class="icon">◈</div>
         <h3>Document vide</h3>
-        <p>Cliquez sur un bloc dans la palette de gauche pour commencer à construire votre contenu.</p>
+        <p>Cliquez sur un bloc dans la palette pour commencer.</p>
       </div>
+      <div class="blocks-list" id="blocksList"></div>
     </div>
   </div>
 
@@ -216,18 +296,24 @@
     <div class="json-content" id="jsonContent">
       <div class="json-code" id="jsonCode">// Ajoutez des blocs pour générer le JSON</div>
     </div>
-    <div class="copy-btn">
-      <button class="btn btn-ghost" style="flex:1" id="btnCopy">Copier JSON</button>
-      <button class="btn btn-accent" style="flex:1" id="btnDownload">Télécharger</button>
+    <div class="panel-actions">
+      <button class="btn btn-ghost" style="flex:1" id="btnCopy">⎘ Copier</button>
+      <button class="btn btn-accent" style="flex:1" id="btnDownload">⬇ Télécharger</button>
     </div>
   </div>
+
 </div>
 
 <!-- IMPORT MODAL -->
 <div class="modal-overlay" id="importModal">
   <div class="modal">
-    <h3>Importer un JSON</h3>
-    <textarea class="import-textarea" id="importTextarea" placeholder="Collez votre JSON ici…"></textarea>
+    <h3>Importer un fichier JSON</h3>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".json,application/json">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-label" id="dropLabel">Cliquez ou déposez un fichier .json</div>
+      <div class="drop-zone-sub">Fichiers .json uniquement</div>
+    </div>
     <div class="import-error" id="importError"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="btnImportCancel">Annuler</button>
@@ -236,411 +322,500 @@
   </div>
 </div>
 
+<textarea id="clipboardHelper"></textarea>
 <div class="toast" id="toast"></div>
 
 <script>
-(function() {
-  // ── State ──────────────────────────────────────────
-  let blocks = [];
-  let currentTab = 'json';
-  let activeBlockId = null;
+document.addEventListener("DOMContentLoaded", function() {
+  var VERSION = '1.7';
 
-  const DEFAULTS = {
-    'main-title':  { type:'main-title',  title:'',   subtitle:'' },
-    'day':         { type:'day',         label:'',   date:'' },
-    'hour':        { type:'hour',        time:'',    duration:'' },
-    'description': { type:'description', text:'' },
-    'link':        { type:'link',        label:'',   url:'' },
-    'image':       { type:'image',       url:'',     caption:'', alt:'' }
+  /* ── state ── */
+  var blocks = [];
+  var currentTab = 'json';
+  var activeId = null;
+  var pendingImport = null;
+
+  var DEFAULTS = {
+    day:         { type:'day',         label:'', date:'' },
+    hour:        { type:'hour',        time:'',  duration:'' },
+    description: { type:'description', text:'' },
+    link:        { type:'link',        label:'', url:'' },
+    image:       { type:'image',       url:'',   caption:'', alt:'' }
   };
 
-  const META = {
-    'main-title':  { label:'TITRE PRINCIPAL', color:'type-main-title' },
-    'day':         { label:'JOUR',            color:'type-day' },
-    'hour':        { label:'HEURE',           color:'type-hour' },
-    'description': { label:'DESCRIPTION',     color:'type-description' },
-    'link':        { label:'LIEN',            color:'type-link' },
-    'image':       { label:'IMAGE',           color:'type-image' }
+  var META = {
+    day:         { label:'JOUR',        color:'type-day' },
+    hour:        { label:'HEURE',       color:'type-hour' },
+    description: { label:'DESCRIPTION', color:'type-description' },
+    link:        { label:'LIEN',        color:'type-link' },
+    image:       { label:'IMAGE',       color:'type-image' }
   };
 
-  function uid() { return Math.random().toString(36).slice(2, 9); }
+  /* ── utils ── */
+  function uid()  { return Math.random().toString(36).slice(2, 9); }
+  function g(id)  { return document.getElementById(id); }
   function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function $(id) { return document.getElementById(id); }
 
-  // ── Block operations ───────────────────────────────
-  function addBlock(type) {
-    const b = { id: uid(), ...JSON.parse(JSON.stringify(DEFAULTS[type])) };
-    blocks.push(b);
-    renderEditor();
-    setActive(b.id);
-    updateOutput();
+  function formatDate(d) {
+    try { return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
+    catch(e) { return d; }
   }
 
-  function deleteBlock(id) {
-    blocks = blocks.filter(b => b.id !== id);
-    if (activeBlockId === id) activeBlockId = null;
-    renderEditor();
-    updateOutput();
+  /* ── block ops ── */
+  function addBlock(type) {
+    var def = DEFAULTS[type]; if (!def) return;
+    var b = { id: uid() };
+    Object.keys(def).forEach(function(k) { b[k] = def[k]; });
+    blocks.push(b);
+    render(); setActive(b.id); sync();
+  }
+
+  function delBlock(id) {
+    blocks = blocks.filter(function(b) { return b.id !== id; });
+    if (activeId === id) activeId = null;
+    render(); sync();
   }
 
   function moveBlock(id, dir) {
-    const idx = blocks.findIndex(b => b.id === id);
-    const ni = idx + dir;
-    if (ni < 0 || ni >= blocks.length) return;
-    [blocks[idx], blocks[ni]] = [blocks[ni], blocks[idx]];
-    renderEditor();
-    setActive(id);
-    updateOutput();
+    var i = blocks.findIndex(function(b) { return b.id === id; });
+    var j = i + dir;
+    if (j < 0 || j >= blocks.length) return;
+    var tmp = blocks[i]; blocks[i] = blocks[j]; blocks[j] = tmp;
+    render(); setActive(id); sync();
   }
 
-  function duplicateBlock(id) {
-    const orig = blocks.find(b => b.id === id);
-    if (!orig) return;
-    const copy = { ...JSON.parse(JSON.stringify(orig)), id: uid() };
-    blocks.splice(blocks.findIndex(b => b.id === id) + 1, 0, copy);
-    renderEditor();
-    setActive(copy.id);
-    updateOutput();
+  function dupBlock(id) {
+    var i = blocks.findIndex(function(b) { return b.id === id; });
+    if (i < 0) return;
+    var c = { id: uid() };
+    Object.keys(blocks[i]).forEach(function(k) { if (k !== 'id') c[k] = blocks[i][k]; });
+    blocks.splice(i + 1, 0, c);
+    render(); setActive(c.id); sync();
   }
 
   function setActive(id) {
-    activeBlockId = id;
-    document.querySelectorAll('.block-card').forEach(el => {
-      const a = el.dataset.id === id;
-      el.classList.toggle('active', a);
-      el.querySelector('.block-body').classList.toggle('collapsed', !a);
-    });
+    activeId = id;
+    var cards = document.querySelectorAll('.block-card');
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var on = card.getAttribute('data-id') === id;
+      card.classList.toggle('active', on);
+      var body = card.querySelector('.block-body');
+      if (body) body.classList.toggle('collapsed', !on);
+    }
   }
 
-  function updateField(id, field, value) {
-    const b = blocks.find(b => b.id === id);
+  function setField(id, field, val) {
+    var b = blocks.find(function(b) { return b.id === id; });
     if (!b) return;
-    b[field] = value;
-    updateOutput();
-    const card = document.querySelector(`.block-card[data-id="${id}"]`);
-    if (card) { const p = card.querySelector('.block-preview-text'); if (p) p.textContent = previewText(b); }
+    b[field] = val;
+    sync();
+    var card = document.querySelector('.block-card[data-id="' + id + '"]');
+    if (card) { var p = card.querySelector('.block-preview-text'); if (p) p.textContent = preview(b); }
   }
 
-  // ── Render helpers ─────────────────────────────────
-  function previewText(b) {
-    if (b.type === 'main-title')  return b.title || '(sans titre)';
-    if (b.type === 'day')         return b.label || b.date || '(jour vide)';
+  /* ── preview text (editor badge) ── */
+  function preview(b) {
+    if (b.type === 'day')         return b.date ? formatDate(b.date).slice(0, 20) + (b.label ? ' · ' + b.label : '') : b.label || '(jour vide)';
     if (b.type === 'hour')        return b.time || '(heure vide)';
-    if (b.type === 'description') return b.text ? b.text.slice(0,60)+(b.text.length>60?'…':'') : '(texte vide)';
+    if (b.type === 'description') return b.text ? b.text.slice(0, 55) + (b.text.length > 55 ? '…' : '') : '(texte vide)';
     if (b.type === 'link')        return b.label || b.url || '(lien vide)';
     if (b.type === 'image')       return b.caption || b.url || '(image vide)';
     return '';
   }
 
-  function fieldHTML(b) {
-    const id = b.id;
-    if (b.type === 'main-title') return `
-      <div class="field-group"><label class="field-label">Titre</label>
-      <input class="field-input" type="text" data-id="${id}" data-field="title" value="${esc(b.title)}" placeholder="Ex: Planning Vacances Été 2025"></div>
-      <div class="field-group"><label class="field-label">Sous-titre (optionnel)</label>
-      <input class="field-input" type="text" data-id="${id}" data-field="subtitle" value="${esc(b.subtitle)}" placeholder="Ex: Du 15 juillet au 10 août"></div>`;
-
-    if (b.type === 'day') return `
-      <div class="field-row">
-        <div class="field-group"><label class="field-label">Label</label>
-        <input class="field-input" type="text" data-id="${id}" data-field="label" value="${esc(b.label)}" placeholder="Ex: Jour 1 — Nice"></div>
-        <div class="field-group"><label class="field-label">Date</label>
-        <input class="field-input" type="date" data-id="${id}" data-field="date" value="${esc(b.date)}"></div>
-      </div>`;
-
-    if (b.type === 'hour') return `
-      <div class="field-row">
-        <div class="field-group"><label class="field-label">Heure</label>
-        <input class="field-input" type="time" data-id="${id}" data-field="time" value="${esc(b.time)}"></div>
-        <div class="field-group"><label class="field-label">Durée (optionnel)</label>
-        <input class="field-input" type="text" data-id="${id}" data-field="duration" value="${esc(b.duration)}" placeholder="Ex: 2h30"></div>
-      </div>`;
-
-    if (b.type === 'description') return `
-      <div class="field-group"><label class="field-label">Texte</label>
-      <textarea class="field-textarea" data-id="${id}" data-field="text" placeholder="Décrivez l'activité…">${esc(b.text)}</textarea></div>`;
-
-    if (b.type === 'link') return `
-      <div class="field-group"><label class="field-label">Label</label>
-      <input class="field-input" type="text" data-id="${id}" data-field="label" value="${esc(b.label)}" placeholder="Ex: Réservation hôtel"></div>
-      <div class="field-group"><label class="field-label">URL</label>
-      <input class="field-input" type="url" data-id="${id}" data-field="url" value="${esc(b.url)}" placeholder="https://…"></div>`;
-
-    if (b.type === 'image') return `
-      <div class="field-group"><label class="field-label">URL de l'image</label>
-      <input class="field-input" type="url" data-id="${id}" data-field="url" value="${esc(b.url)}" placeholder="https://…"></div>
-      <div class="field-row">
-        <div class="field-group"><label class="field-label">Légende</label>
-        <input class="field-input" type="text" data-id="${id}" data-field="caption" value="${esc(b.caption)}" placeholder="Description…"></div>
-        <div class="field-group"><label class="field-label">Alt text</label>
-        <input class="field-input" type="text" data-id="${id}" data-field="alt" value="${esc(b.alt)}" placeholder="Texte alt…"></div>
-      </div>`;
+  /* ── field HTML ── */
+  function fields(b) {
+    var id = b.id;
+    if (b.type === 'day') return (
+      '<div class="field-row">' +
+        '<div class="field-group"><label class="field-label">Date</label>' +
+        '<input class="field-input" type="date" data-id="' + id + '" data-field="date" value="' + esc(b.date) + '"></div>' +
+        '<div class="field-group"><label class="field-label">Label</label>' +
+        '<input class="field-input" type="text" data-id="' + id + '" data-field="label" value="' + esc(b.label) + '" placeholder="Ex: Arrivée à Nice"></div>' +
+      '</div>'
+    );
+    if (b.type === 'hour') return (
+      '<div class="field-row">' +
+        '<div class="field-group"><label class="field-label">Heure</label>' +
+        '<input class="field-input" type="time" data-id="' + id + '" data-field="time" value="' + esc(b.time) + '"></div>' +
+        '<div class="field-group"><label class="field-label">Durée</label>' +
+        '<input class="field-input" type="text" data-id="' + id + '" data-field="duration" value="' + esc(b.duration) + '" placeholder="2h30"></div>' +
+      '</div>'
+    );
+    if (b.type === 'description') return (
+      '<div class="field-group"><label class="field-label">Texte</label>' +
+      '<textarea class="field-textarea" data-id="' + id + '" data-field="text" placeholder="Décrivez l\'activité…">' + esc(b.text) + '</textarea></div>'
+    );
+    if (b.type === 'link') return (
+      '<div class="field-group"><label class="field-label">Label</label>' +
+      '<input class="field-input" type="text" data-id="' + id + '" data-field="label" value="' + esc(b.label) + '" placeholder="Ex: Réservation hôtel"></div>' +
+      '<div class="field-group"><label class="field-label">URL</label>' +
+      '<input class="field-input" type="url" data-id="' + id + '" data-field="url" value="' + esc(b.url) + '" placeholder="https://…"></div>'
+    );
+    if (b.type === 'image') return (
+      '<div class="field-group"><label class="field-label">URL image</label>' +
+      '<input class="field-input" type="url" data-id="' + id + '" data-field="url" value="' + esc(b.url) + '" placeholder="https://…"></div>' +
+      '<div class="field-row">' +
+        '<div class="field-group"><label class="field-label">Légende</label>' +
+        '<input class="field-input" type="text" data-id="' + id + '" data-field="caption" value="' + esc(b.caption) + '" placeholder="Description…"></div>' +
+        '<div class="field-group"><label class="field-label">Alt</label>' +
+        '<input class="field-input" type="text" data-id="' + id + '" data-field="alt" value="' + esc(b.alt) + '" placeholder="Texte alt…"></div>' +
+      '</div>'
+    );
     return '';
   }
 
-  // ── Render editor ──────────────────────────────────
-  function renderEditor() {
-    const list  = $('blocksList');
-    const empty = $('emptyState');
-    $('blockCount').textContent = `${blocks.length} bloc(s)`;
+  /* ── render editor ── */
+  function render() {
+    var list  = g('blocksList');
+    var empty = g('emptyState');
+    g('blockCount').textContent = blocks.length + ' bloc(s)';
+    empty.style.display = blocks.length === 0 ? 'flex' : 'none';
 
-    if (blocks.length === 0) {
-      list.innerHTML = '';
-      list.appendChild(empty);
-      empty.style.display = 'flex';
-      return;
+    if (blocks.length === 0) { list.innerHTML = ''; return; }
+
+    var html = '';
+    for (var i = 0; i < blocks.length; i++) {
+      var b = blocks[i], m = META[b.type], on = b.id === activeId;
+      var badge = (b.type === 'day' && b.date) ? formatDate(b.date).slice(0, 16) : m.label;
+      html +=
+        '<div class="block-card' + (on ? ' active' : '') + '" data-id="' + b.id + '">' +
+        '<div class="block-header" data-action="toggle" data-id="' + b.id + '">' +
+        '<span class="block-handle">⠿</span>' +
+        '<span class="block-type-badge ' + m.color + '">' + esc(badge) + '</span>' +
+        '<span class="block-preview-text">' + esc(preview(b)) + '</span>' +
+        '<div class="block-actions">' +
+        (i > 0 ? '<button class="block-action-btn" data-action="up" data-id="' + b.id + '">↑</button>' : '') +
+        (i < blocks.length - 1 ? '<button class="block-action-btn" data-action="down" data-id="' + b.id + '">↓</button>' : '') +
+        '<button class="block-action-btn" data-action="dup" data-id="' + b.id + '">⎘</button>' +
+        '<button class="block-action-btn del" data-action="del" data-id="' + b.id + '">✕</button>' +
+        '</div></div>' +
+        '<div class="block-body' + (on ? '' : ' collapsed') + '">' + fields(b) + '</div>' +
+        '</div>';
     }
-    empty.style.display = 'none';
+    list.innerHTML = html;
 
-    list.innerHTML = blocks.map((b, idx) => {
-      const m = META[b.type], act = b.id === activeBlockId;
-      return `<div class="block-card ${act?'active':''}" data-id="${b.id}">
-        <div class="block-header" data-action="toggle" data-id="${b.id}">
-          <span class="block-handle">⠿</span>
-          <span class="block-type-badge ${m.color}">${m.label}</span>
-          <span class="block-preview-text">${previewText(b)}</span>
-          <div class="block-actions">
-            ${idx>0 ? `<button class="block-action-btn" data-action="up" data-id="${b.id}">↑</button>` : ''}
-            ${idx<blocks.length-1 ? `<button class="block-action-btn" data-action="down" data-id="${b.id}">↓</button>` : ''}
-            <button class="block-action-btn" data-action="dup" data-id="${b.id}">⎘</button>
-            <button class="block-action-btn del" data-action="del" data-id="${b.id}">✕</button>
-          </div>
-        </div>
-        <div class="block-body ${act?'':'collapsed'}">${fieldHTML(b)}</div>
-      </div>`;
-    }).join('');
-
-    // attach field listeners
-    list.querySelectorAll('.field-input, .field-textarea').forEach(el => {
-      el.addEventListener('input', () => updateField(el.dataset.id, el.dataset.field, el.value));
-    });
+    var inputs = list.querySelectorAll('.field-input, .field-textarea');
+    for (var j = 0; j < inputs.length; j++) {
+      (function(el) {
+        el.addEventListener('input', function() { setField(el.getAttribute('data-id'), el.getAttribute('data-field'), el.value); });
+      })(inputs[j]);
+    }
   }
 
-  // ── Block list event delegation ────────────────────
-  $('blocksList').addEventListener('click', function(e) {
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-    e.stopPropagation();
-    const action = btn.dataset.action;
-    const id = btn.dataset.id;
-    if (action === 'toggle') setActive(id);
-    if (action === 'del')    deleteBlock(id);
-    if (action === 'dup')    duplicateBlock(id);
-    if (action === 'up')     moveBlock(id, -1);
-    if (action === 'down')   moveBlock(id, 1);
-  });
-
-  // ── Palette ────────────────────────────────────────
-  $('palette').addEventListener('click', function(e) {
-    const item = e.target.closest('[data-add]');
-    if (item) addBlock(item.dataset.add);
-  });
-
-  // ── Header buttons ─────────────────────────────────
-  $('btnImport').addEventListener('click', openImport);
-  $('btnClear').addEventListener('click', () => {
-    if (blocks.length === 0 || confirm('Vider tous les blocs ?')) {
-      blocks = []; activeBlockId = null; renderEditor(); updateOutput();
+  /* ── event delegation: editor list ── */
+  g('blocksList').addEventListener('click', function(e) {
+    var el = e.target;
+    while (el && el !== this) {
+      var a = el.getAttribute('data-action');
+      if (a) {
+        var id = el.getAttribute('data-id');
+        e.stopPropagation();
+        if (a === 'toggle') setActive(id);
+        if (a === 'del')    delBlock(id);
+        if (a === 'dup')    dupBlock(id);
+        if (a === 'up')     moveBlock(id, -1);
+        if (a === 'down')   moveBlock(id, 1);
+        return;
+      }
+      el = el.parentElement;
     }
   });
-  $('btnExport').addEventListener('click', exportJSON);
-  $('btnCopy').addEventListener('click', copyJSON);
-  $('btnDownload').addEventListener('click', exportJSON);
-  $('docTitle').addEventListener('input', updateOutput);
 
-  // ── Tabs ───────────────────────────────────────────
-  document.querySelectorAll('.json-tab').forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab, btn));
+  /* ── palette ── */
+  g('palette').addEventListener('click', function(e) {
+    var el = e.target;
+    while (el && el !== this) {
+      var t = el.getAttribute('data-add');
+      if (t) { addBlock(t); return; }
+      el = el.parentElement;
+    }
   });
 
-  // ── JSON output ────────────────────────────────────
+  /* ── header ── */
+  g('btnImport').addEventListener('click', openImport);
+  g('btnClear').addEventListener('click', function() {
+    if (!blocks.length) return;
+    blocks = []; activeId = null; render(); sync(); toast('Document vidé', 'ok');
+  });
+  g('btnExport').addEventListener('click', exportJSON);
+  g('btnCopy').addEventListener('click', copyJSON);
+  g('btnDownload').addEventListener('click', exportJSON);
+  g('docTitle').addEventListener('input', sync);
+
+  /* ── tabs ── */
+  var tabBtns = document.querySelectorAll('.json-tab');
+  for (var t = 0; t < tabBtns.length; t++) {
+    (function(btn) {
+      btn.addEventListener('click', function() { switchTab(btn.getAttribute('data-tab'), btn); });
+    })(tabBtns[t]);
+  }
+
+  /* ── JSON build & output ── */
   function buildJSON() {
     return {
-      schema: 'json-builder/v1', type: 'document',
-      meta: { title: $('docTitle').value || 'Document', created: new Date().toISOString(), blockCount: blocks.length },
-      blocks: blocks.map(({ id, ...rest }) => rest)
+      schema: 'samos-planning/v' + VERSION,
+      type: 'document',
+      meta: { title: g('docTitle').value || 'Document', version: VERSION, created: new Date().toISOString(), blockCount: blocks.length },
+      blocks: blocks.map(function(b) {
+        var o = {}; Object.keys(b).forEach(function(k) { if (k !== 'id') o[k] = b[k]; }); return o;
+      })
     };
   }
 
   function syntaxHL(json) {
     return JSON.stringify(json, null, 2)
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => {
-        let c = 'num';
+      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(m) {
+        var c = 'num';
         if (/^"/.test(m)) c = /:$/.test(m) ? 'key' : 'str';
         else if (/true|false/.test(m)) c = 'bool';
         else if (/null/.test(m)) c = 'null';
-        return `<span class="${c}">${m}</span>`;
+        return '<span class="' + c + '">' + m + '</span>';
       });
   }
 
-  function updateOutput() {
+  function sync() {
     if (currentTab === 'json') {
-      const code = $('jsonCode');
-      code.innerHTML = blocks.length === 0
-        ? '<span style="color:#555">// Ajoutez des blocs pour générer le JSON</span>'
-        : syntaxHL(buildJSON());
+      var code = g('jsonCode');
+      code.innerHTML = blocks.length ? syntaxHL(buildJSON()) : '<span style="color:#555">// Ajoutez des blocs pour générer le JSON</span>';
     } else {
-      const content = $('jsonContent');
-      const old = content.querySelector('.preview-content');
+      var content = g('jsonContent');
+      var old = content.querySelector('.preview-wrap');
       if (old) content.removeChild(old);
-      content.insertBefore(renderPreview(), content.firstChild);
+      var pw = buildPreview();
+      content.appendChild(pw);
     }
   }
 
   function switchTab(tab, btn) {
     currentTab = tab;
-    document.querySelectorAll('.json-tab').forEach(t => t.classList.remove('active'));
+    var allTabs = document.querySelectorAll('.json-tab');
+    for (var ti = 0; ti < allTabs.length; ti++) allTabs[ti].classList.remove('active');
     btn.classList.add('active');
-    const content = $('jsonContent');
-    const code = $('jsonCode');
+    var content = g('jsonContent');
+    var code = g('jsonCode');
     if (tab === 'json') {
       content.style.background = '#1e1e2e';
-      const prev = content.querySelector('.preview-content');
-      if (prev) content.removeChild(prev);
-      if (!content.contains(code)) content.appendChild(code);
+      code.style.display = 'block';
+      var prev = content.querySelector('.preview-wrap');
+      if (prev) prev.style.display = 'none';
     } else {
       content.style.background = 'var(--bg)';
-      if (code.parentNode) code.parentNode.removeChild(code);
+      code.style.display = 'none';
     }
-    updateOutput();
+    sync();
   }
 
+  /* ── clipboard / export ── */
   function copyJSON() {
-    navigator.clipboard.writeText(JSON.stringify(buildJSON(), null, 2))
-      .then(() => toast('JSON copié !')).catch(() => toast('Erreur copie'));
+    var text = JSON.stringify(buildJSON(), null, 2);
+    var helper = g('clipboardHelper');
+    helper.value = text; helper.select();
+    try {
+      document.execCommand('copy'); toast('JSON copié !', 'ok');
+    } catch(e) {
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(function() { toast('JSON copié !', 'ok'); }).catch(function() { toast('Utilisez Télécharger', ''); });
+      else toast('Utilisez Télécharger', '');
+    }
   }
 
   function exportJSON() {
-    const blob = new Blob([JSON.stringify(buildJSON(), null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = ($('docTitle').value || 'document').replace(/[^a-z0-9]/gi, '_') + '.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast('JSON téléchargé !');
+    var text = JSON.stringify(buildJSON(), null, 2);
+    var name = (g('docTitle').value || 'document').replace(/[^a-z0-9]/gi, '_') + '.json';
+    try {
+      var blob = new Blob([text], { type:'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a'); a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+      toast('Téléchargé : ' + name, 'ok');
+    } catch(e) {
+      try {
+        var uri = 'data:application/json;charset=utf-8,' + encodeURIComponent(text);
+        var a2 = document.createElement('a'); a2.href = uri; a2.download = name;
+        document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+        toast('Téléchargé : ' + name, 'ok');
+      } catch(e2) { toast('Erreur — copiez le JSON', 'err'); }
+    }
   }
 
-  // ── Import modal ───────────────────────────────────
+  /* ── import modal ── */
   function openImport() {
-    $('importModal').classList.add('show');
-    $('importError').textContent = '';
-    $('importTextarea').value = '';
+    pendingImport = null;
+    g('importError').textContent = '';
+    g('dropLabel').textContent = 'Cliquez ou déposez un fichier .json';
+    g('dropZone').classList.remove('file-ok');
+    g('fileInput').value = '';
+    g('importModal').classList.add('show');
   }
-  function closeImport() { $('importModal').classList.remove('show'); }
-  $('btnImportCancel').addEventListener('click', closeImport);
-  $('importModal').addEventListener('click', e => { if (e.target === $('importModal')) closeImport(); });
-  $('btnImportConfirm').addEventListener('click', () => {
-    try {
-      const data = JSON.parse($('importTextarea').value);
-      if (!Array.isArray(data.blocks)) throw new Error('Champ "blocks" manquant');
-      blocks = data.blocks.map(b => ({ id: uid(), ...b }));
-      if (data.meta?.title) $('docTitle').value = data.meta.title;
-      renderEditor(); updateOutput(); closeImport(); toast('Importé !');
-    } catch(e) { $('importError').textContent = '⚠ ' + e.message; }
+  function closeImport() { g('importModal').classList.remove('show'); pendingImport = null; }
+  g('btnImportCancel').addEventListener('click', closeImport);
+  g('importModal').addEventListener('click', function(e) { if (e.target === this) closeImport(); });
+
+  g('fileInput').addEventListener('change', function() { if (this.files && this.files[0]) readFile(this.files[0]); });
+
+  var dz = g('dropZone');
+  dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
+  dz.addEventListener('drop', function(e) {
+    e.preventDefault(); dz.classList.remove('dragover');
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) readFile(f);
   });
 
-  // ── Toast ──────────────────────────────────────────
-  function toast(msg) {
-    const t = $('toast'); t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
+  function readFile(file) {
+    g('importError').textContent = '';
+    if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+      g('importError').textContent = '⚠ Fichier invalide — choisissez un .json'; return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = JSON.parse(e.target.result);
+        if (!data.blocks || !Array.isArray(data.blocks)) throw new Error('Champ "blocks" manquant');
+        pendingImport = data;
+        g('dropLabel').textContent = '✓ ' + file.name;
+        g('dropZone').classList.add('file-ok');
+        g('importError').textContent = '';
+      } catch(err) {
+        g('importError').textContent = '⚠ ' + err.message;
+        pendingImport = null;
+      }
+    };
+    reader.onerror = function() { g('importError').textContent = '⚠ Erreur de lecture'; };
+    reader.readAsText(file);
   }
 
-  // ── Preview render ─────────────────────────────────
-  function mk(tag, cls) { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
+  g('btnImportConfirm').addEventListener('click', function() {
+    if (!pendingImport) { g('importError').textContent = '⚠ Sélectionnez un fichier .json'; return; }
+    blocks = pendingImport.blocks.map(function(b) {
+      var o = { id: uid() }; Object.keys(b).forEach(function(k) { o[k] = b[k]; }); return o;
+    });
+    if (pendingImport.meta && pendingImport.meta.title) g('docTitle').value = pendingImport.meta.title;
+    activeId = null;
+    render(); sync(); closeImport();
+    toast('Importé — ' + blocks.length + ' bloc(s)', 'ok');
+  });
 
-  function renderPreview() {
-    const wrap = mk('div', 'preview-content');
-    let i = 0;
+  /* ── toast ── */
+  var toastT = null;
+  function toast(msg, type) {
+    var el = g('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (type ? ' ' + type : '');
+    if (toastT) clearTimeout(toastT);
+    toastT = setTimeout(function() { el.classList.remove('show'); }, 2600);
+  }
+
+  /* ── preview builder ── */
+  function mk(tag, cls) { var e = document.createElement(tag); if (cls) e.className = cls; return e; }
+
+  function buildPreview() {
+    var wrap = mk('div', 'preview-wrap');
+    var i = 0;
+
     while (i < blocks.length) {
-      const b = blocks[i];
+      var b = blocks[i];
 
-      if (b.type === 'main-title') {
-        const hero = mk('div', 'preview-main-title-block');
-        const t = mk('div', 'preview-main-title'); t.textContent = b.title || '(Titre principal)';
-        hero.appendChild(t);
-        if (b.subtitle) { const s = mk('div','preview-main-subtitle'); s.textContent = b.subtitle; hero.appendChild(s); }
-        wrap.appendChild(hero); i++; continue;
-      }
-
+      /* ── DAY BLOCK ── */
       if (b.type === 'day') {
-        const dayEl = mk('div','preview-day-block');
-        const lbl = mk('div','preview-day-label'); lbl.textContent = b.label || 'Jour'; dayEl.appendChild(lbl);
-        if (b.date) {
-          const dt = mk('div','preview-day-date');
-          try { dt.textContent = new Date(b.date+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
-          catch(e) { dt.textContent = b.date; }
-          dayEl.appendChild(dt);
-        }
-        wrap.appendChild(dayEl); i++;
+        var dayDiv = mk('div', 'pv-day');
+        var header = mk('div', 'pv-day-header');
 
-        const tl = mk('div','preview-timeline');
-        while (i < blocks.length && !['day','main-title'].includes(blocks[i].type)) {
-          const cb = blocks[i];
+        /* date (large) */
+        var dateEl = mk('span', 'pv-day-date');
+        dateEl.textContent = b.date ? formatDate(b.date) : 'Jour';
+        header.appendChild(dateEl);
+
+        /* separator + label (if any) */
+        if (b.label && b.label.trim()) {
+          var sep = mk('span', 'pv-day-sep'); sep.textContent = '·'; header.appendChild(sep);
+          var lblEl = mk('span', 'pv-day-label'); lblEl.textContent = b.label; header.appendChild(lblEl);
+        }
+        dayDiv.appendChild(header);
+        wrap.appendChild(dayDiv);
+        i++;
+
+        /* timeline indented under this day */
+        var tl = mk('div', 'pv-timeline');
+
+        while (i < blocks.length && blocks[i].type !== 'day') {
+          var cb = blocks[i];
+
           if (cb.type === 'hour') {
-            const row = mk('div','preview-row');
-            const tc = mk('div','preview-col-time');
-            const tt = mk('div','preview-time-text'); tt.textContent = cb.time || '—';
-            if (cb.duration) { const d = mk('span','preview-time-duration'); d.textContent = cb.duration; tt.appendChild(d); }
-            tc.appendChild(tt); row.appendChild(tc);
-            const cc = mk('div','preview-col-content');
+            /* hour row */
+            var row = mk('div', 'pv-row');
+            var tc  = mk('div', 'pv-time');
+            var tv  = mk('div', 'pv-time-val'); tv.textContent = cb.time || '—'; tc.appendChild(tv);
+            if (cb.duration) { var td = mk('div', 'pv-time-dur'); td.textContent = cb.duration; tc.appendChild(td); }
+            row.appendChild(tc);
+            var cc = mk('div', 'pv-content');
             i++;
-            while (i < blocks.length && !['hour','day','main-title'].includes(blocks[i].type)) {
-              appendItem(cc, blocks[i]); i++;
+            while (i < blocks.length && blocks[i].type !== 'hour' && blocks[i].type !== 'day') {
+              addItem(cc, blocks[i]); i++;
             }
-            row.appendChild(cc); tl.appendChild(row);
+            row.appendChild(cc);
+            tl.appendChild(row);
           } else {
-            const orp = mk('div','preview-orphan'); appendItem(orp, cb); tl.appendChild(orp); i++;
+            /* content without hour */
+            var orp = mk('div', 'pv-orphan');
+            addItem(orp, cb);
+            tl.appendChild(orp);
+            i++;
           }
         }
-        wrap.appendChild(tl); continue;
+
+        wrap.appendChild(tl);
+        continue;
       }
 
-      // top-level orphan
-      const orp = mk('div','preview-orphan'); appendItem(orp, b); wrap.appendChild(orp); i++;
+      /* top-level orphan (before any day) */
+      var o2 = mk('div', 'pv-orphan'); addItem(o2, b); wrap.appendChild(o2); i++;
     }
+
     return wrap;
   }
 
-  function appendItem(parent, b) {
+  function addItem(parent, b) {
     if (b.type === 'description') {
-      const p = mk('p','preview-description'); p.textContent = b.text; parent.appendChild(p);
+      var p = mk('p', 'pv-description'); p.textContent = b.text; parent.appendChild(p);
     } else if (b.type === 'link') {
-      const a = mk('a','preview-link'); a.href = b.url||'#'; a.target = '_blank';
-      a.textContent = '🔗 '+(b.label||b.url||'Lien'); parent.appendChild(a);
+      var a = mk('a', 'pv-link'); a.href = b.url || '#'; a.target = '_blank';
+      a.textContent = '🔗 ' + (b.label || b.url || 'Lien'); parent.appendChild(a);
     } else if (b.type === 'image') {
       if (b.url) {
-        const img = mk('img','preview-image'); img.src = b.url; img.alt = b.alt||b.caption||''; parent.appendChild(img);
+        var img = mk('img', 'pv-img'); img.src = b.url; img.alt = b.alt || b.caption || ''; parent.appendChild(img);
       } else {
-        const ph = mk('div','preview-image-placeholder'); ph.textContent = '🖼 Image (URL manquante)'; parent.appendChild(ph);
+        var ph = mk('div', 'pv-img-ph'); ph.textContent = '🖼 Image (URL manquante)'; parent.appendChild(ph);
       }
-      if (b.caption) { const c = mk('p','preview-image-caption'); c.textContent = b.caption; parent.appendChild(c); }
+      if (b.caption) { var cap = mk('p', 'pv-img-caption'); cap.textContent = b.caption; parent.appendChild(cap); }
     }
   }
 
-  // ── Demo data ──────────────────────────────────────
+  /* ── demo data ── */
   blocks = [
-    {id:uid(),type:'main-title',title:'Planning Vacances Été 2025',subtitle:"Côte d'Azur · 15 juillet – 10 août"},
-    {id:uid(),type:'day',label:'Jour 1 — Arrivée à Nice',date:'2025-07-15'},
-    {id:uid(),type:'hour',time:'14:00',duration:'2h'},
-    {id:uid(),type:'description',text:"Arrivée à l'aéroport de Nice Côte d'Azur. Récupération des bagages et transfert vers l'hôtel."},
-    {id:uid(),type:'link',label:'Réservation hôtel Negresco',url:'https://www.lenegresco.com'},
-    {id:uid(),type:'hour',time:'19:30',duration:'1h30'},
-    {id:uid(),type:'description',text:'Dîner de bienvenue sur la Promenade des Anglais. Restaurant Le Plongeoir, vue mer exceptionnelle.'},
-    {id:uid(),type:'image',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Nice_Promenade_des_Anglais.jpg/1280px-Nice_Promenade_des_Anglais.jpg',caption:'La Promenade des Anglais, Nice',alt:'Promenade des Anglais'},
-    {id:uid(),type:'day',label:'Jour 2 — Monaco',date:'2025-07-16'},
-    {id:uid(),type:'hour',time:'09:00',duration:'1h'},
-    {id:uid(),type:'description',text:'Départ en train vers Monaco. Visite du Palais du Prince et des jardins exotiques.'},
-    {id:uid(),type:'link',label:'Infos Palais Princier',url:'https://www.palais.mc'},
-    {id:uid(),type:'hour',time:'14:00',duration:'3h'},
-    {id:uid(),type:'description',text:'Après-midi au Casino de Monte-Carlo et promenade dans le quartier de la Condamine.'},
-    {id:uid(),type:'image',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Monte_carlo_casino_2019.jpg/1280px-Monte_carlo_casino_2019.jpg',caption:'Casino de Monte-Carlo',alt:'Casino de Monte-Carlo'},
+    { id:uid(), type:'day',         date:'2025-07-15', label:'Arrivée à Nice' },
+    { id:uid(), type:'hour',        time:'14:00',       duration:'2h' },
+    { id:uid(), type:'description', text:"Arrivée à l'aéroport de Nice Côte d'Azur. Récupération des bagages et transfert vers l'hôtel." },
+    { id:uid(), type:'link',        label:'Réservation hôtel Negresco', url:'https://www.lenegresco.com' },
+    { id:uid(), type:'hour',        time:'19:30',       duration:'1h30' },
+    { id:uid(), type:'description', text:'Dîner de bienvenue sur la Promenade des Anglais. Restaurant Le Plongeoir, vue mer exceptionnelle.' },
+    { id:uid(), type:'image',       url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Nice_Promenade_des_Anglais.jpg/1280px-Nice_Promenade_des_Anglais.jpg', caption:'La Promenade des Anglais, Nice', alt:'Promenade des Anglais' },
+    { id:uid(), type:'day',         date:'2025-07-16', label:'Monaco' },
+    { id:uid(), type:'hour',        time:'09:00',       duration:'1h' },
+    { id:uid(), type:'description', text:'Départ en train vers Monaco. Visite du Palais du Prince et des jardins exotiques.' },
+    { id:uid(), type:'link',        label:'Infos Palais Princier', url:'https://www.palais.mc' },
+    { id:uid(), type:'hour',        time:'14:00',       duration:'3h' },
+    { id:uid(), type:'description', text:'Après-midi au Casino de Monte-Carlo et promenade dans le quartier de la Condamine.' },
+    { id:uid(), type:'image',       url:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Monte_carlo_casino_2019.jpg/1280px-Monte_carlo_casino_2019.jpg', caption:'Casino de Monte-Carlo', alt:'Casino de Monte-Carlo' }
   ];
-  renderEditor();
-  updateOutput();
 
-})();
+  render();
+  sync();
+
+});
 </script>
 </body>
 </html>
