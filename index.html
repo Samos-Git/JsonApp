@@ -485,9 +485,9 @@ document.addEventListener("DOMContentLoaded", function() {
       var b = blocks[i], m = META[b.type], on = b.id === activeId;
       var badge = (b.type === 'day' && b.date) ? formatDate(b.date).slice(0, 16) : m.label;
       html +=
-        '<div class="block-card' + (on ? ' active' : '') + '" data-id="' + b.id + '" draggable="true">' +
+        '<div class="block-card' + (on ? ' active' : '') + '" data-id="' + b.id + '">' +
         '<div class="block-header" data-action="toggle" data-id="' + b.id + '">' +
-        '<span class="block-handle">⠿</span>' +
+        '<span class="block-handle" draggable="true" data-drag="true" data-id="' + b.id + '">⠿</span>' +
         '<span class="block-type-badge ' + m.color + '">' + esc(badge) + '</span>' +
         '<span class="block-preview-text">' + esc(preview(b)) + '</span>' +
         '<div class="block-actions">' +
@@ -500,82 +500,85 @@ document.addEventListener("DOMContentLoaded", function() {
         '</div>';
     }
     list.innerHTML = html;
-
+    attachDragHandles();
     // field input handled by delegation on blocksList
   }
 
   /* ── drag & drop reorder ── */
   var dragSrcId = null;
+  var dropTargetId = null;
+  var dropPosition = 'after'; // 'before' or 'after'
 
-  g('blocksList').addEventListener('dragstart', function(e) {
-    // Only allow drag from the handle
-    var handle = e.target;
-    if (!handle.classList.contains('block-handle')) { e.preventDefault(); return; }
-    var card = handle.closest ? handle.closest('.block-card') : (function(el) {
-      while (el && !el.classList.contains('block-card')) el = el.parentElement; return el;
-    })(handle);
-    if (!card) return;
-    dragSrcId = card.getAttribute('data-id');
-    card.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', dragSrcId);
-  });
+  function clearDragStyles() {
+    var cards = g('blocksList').querySelectorAll('.block-card');
+    for (var i = 0; i < cards.length; i++)
+      cards[i].classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
+  }
+
+  function getCard(el) {
+    while (el && el !== g('blocksList')) {
+      if (el.classList && el.classList.contains('block-card')) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  // Attach drag listeners directly to handles after each render
+  function attachDragHandles() {
+    var handles = g('blocksList').querySelectorAll('[data-drag="true"]');
+    for (var i = 0; i < handles.length; i++) {
+      (function(handle) {
+        handle.addEventListener('dragstart', function(e) {
+          dragSrcId = handle.getAttribute('data-id');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', dragSrcId);
+          var card = getCard(handle);
+          if (card) setTimeout(function() { card.classList.add('dragging'); }, 0);
+        });
+      })(handles[i]);
+    }
+  }
 
   g('blocksList').addEventListener('dragend', function() {
+    clearDragStyles();
     dragSrcId = null;
-    var cards = g('blocksList').querySelectorAll('.block-card');
-    for (var i = 0; i < cards.length; i++) {
-      cards[i].classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
-    }
+    dropTargetId = null;
   });
 
   g('blocksList').addEventListener('dragover', function(e) {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    var card = e.target;
-    while (card && card !== this && !card.classList.contains('block-card')) card = card.parentElement;
-    if (!card || !card.classList.contains('block-card')) return;
-    if (card.getAttribute('data-id') === dragSrcId) return;
-    // Clear all indicators
-    var cards = g('blocksList').querySelectorAll('.block-card');
-    for (var i = 0; i < cards.length; i++) cards[i].classList.remove('drag-over-top', 'drag-over-bottom');
-    // Show indicator above or below based on mouse position
+    if (!dragSrcId) return;
+    var card = getCard(e.target);
+    if (!card) return;
+    var tid = card.getAttribute('data-id');
+    if (tid === dragSrcId) return;
+    clearDragStyles();
+    var srcCard = g('blocksList').querySelector('[data-id="' + dragSrcId + '"]');
+    if (srcCard) srcCard.classList.add('dragging');
     var rect = card.getBoundingClientRect();
-    var mid = rect.top + rect.height / 2;
-    if (e.clientY < mid) card.classList.add('drag-over-top');
-    else card.classList.add('drag-over-bottom');
-  });
-
-  g('blocksList').addEventListener('dragleave', function(e) {
-    var card = e.target;
-    while (card && card !== this && !card.classList.contains('block-card')) card = card.parentElement;
-    if (card && card.classList.contains('block-card')) {
-      card.classList.remove('drag-over-top', 'drag-over-bottom');
-    }
+    dropPosition = (e.clientY < rect.top + rect.height / 2) ? 'before' : 'after';
+    dropTargetId = tid;
+    card.classList.add(dropPosition === 'before' ? 'drag-over-top' : 'drag-over-bottom');
   });
 
   g('blocksList').addEventListener('drop', function(e) {
     e.preventDefault();
-    var card = e.target;
-    while (card && card !== this && !card.classList.contains('block-card')) card = card.parentElement;
-    if (!card || !card.classList.contains('block-card')) return;
-    var targetId = card.getAttribute('data-id');
-    if (!dragSrcId || dragSrcId === targetId) return;
-
-    var srcIdx = blocks.findIndex(function(b) { return b.id === dragSrcId; });
-    var tgtIdx = blocks.findIndex(function(b) { return b.id === targetId; });
+    clearDragStyles();
+    if (!dragSrcId || !dropTargetId || dragSrcId === dropTargetId) return;
+    var srcIdx = -1, tgtIdx = -1;
+    for (var i = 0; i < blocks.length; i++) {
+      if (blocks[i].id === dragSrcId) srcIdx = i;
+      if (blocks[i].id === dropTargetId) tgtIdx = i;
+    }
     if (srcIdx < 0 || tgtIdx < 0) return;
-
-    // Insert above or below
-    var rect = card.getBoundingClientRect();
-    var insertAfter = e.clientY >= rect.top + rect.height / 2;
-
     var moved = blocks.splice(srcIdx, 1)[0];
-    var newIdx = blocks.findIndex(function(b) { return b.id === targetId; });
-    if (insertAfter) newIdx++;
-    blocks.splice(newIdx, 0, moved);
-
-    render(); setActive(dragSrcId); sync();
+    tgtIdx = -1;
+    for (var j = 0; j < blocks.length; j++) { if (blocks[j].id === dropTargetId) { tgtIdx = j; break; } }
+    var insertAt = dropPosition === 'after' ? tgtIdx + 1 : tgtIdx;
+    blocks.splice(insertAt, 0, moved);
+    var savedId = dragSrcId;
+    dragSrcId = null; dropTargetId = null;
+    render(); setActive(savedId); sync();
   });
 
   /* ── event delegation: editor list ── */
