@@ -125,7 +125,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 /* Day block — full-width dark band */
 .pv-day {
-  background: var(--text);
+  background: #484ddb;
   padding: 14px 22px;
   margin-top: 24px;
 }
@@ -190,7 +190,8 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .pv-activity-desc { font-size:13px; color:var(--text-muted); line-height:1.6; }
 .pv-link { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--accent); text-decoration:none; border:1px solid rgba(200,134,10,.3); padding:3px 10px; border-radius:2px; font-family:var(--font-mono); width:fit-content; }
 .pv-link:hover { background:var(--accent-light); }
-.pv-img { width:100%; max-height:130px; object-fit:cover; border-radius:3px; border:1px solid var(--border); }
+.pv-img-wrap { width:100%; }
+  .pv-img { max-width:100%; height:auto; max-height:260px; object-fit:contain; border-radius:3px; border:1px solid var(--border); display:block; }
 .pv-img-caption { font-size:10px; color:var(--text-dim); font-style:italic; }
 .pv-img-ph { width:100%; height:60px; background:var(--surface2); border:1px dashed var(--border-strong); border-radius:3px; display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:11px; }
 .pv-orphan { padding:10px 14px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:5px; background:var(--bg); }
@@ -848,7 +849,7 @@ document.addEventListener("DOMContentLoaded", function() {
       a.textContent = '🔗 ' + (b.label || b.url || 'Lien'); parent.appendChild(a);
     } else if (b.type === 'image') {
       if (b.url) {
-        var img = mk('img', 'pv-img'); img.src = b.url; img.alt = b.alt || b.caption || ''; parent.appendChild(img);
+        var imgWrap = mk('div', 'pv-img-wrap'); var img = mk('img', 'pv-img'); img.src = b.url; img.alt = b.alt || b.caption || ''; imgWrap.appendChild(img); parent.appendChild(imgWrap);
       } else {
         var ph = mk('div', 'pv-img-ph'); ph.textContent = '🖼 Image (URL manquante)'; parent.appendChild(ph);
       }
