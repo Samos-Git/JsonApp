@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Samos Planning v2.2</title>
+<title>Samos Planning v2.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -81,7 +81,12 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .block-card.active { border-color:var(--accent); box-shadow:0 0 0 2px rgba(200,134,10,.12); }
 .block-header { display:flex; align-items:center; gap:8px; padding:8px 10px; cursor:pointer; border-bottom:1px solid transparent; background:var(--surface2); transition:border-color .1s; }
 .block-card.active .block-header { border-bottom-color:var(--border); }
-.block-handle { color:var(--text-dim); font-size:12px; }
+.block-handle { color:var(--text-dim); font-size:12px; cursor:grab; padding:2px 4px; border-radius:3px; }
+.block-handle:active { cursor:grabbing; }
+.block-handle:hover { color:var(--accent); }
+.block-card.drag-over-top { border-top:2px solid var(--accent); }
+.block-card.drag-over-bottom { border-bottom:2px solid var(--accent); }
+.block-card.dragging { opacity:0.4; }
 .block-type-badge { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; padding:2px 7px; border-radius:2px; font-weight:600; font-family:var(--font-mono); flex-shrink:0; }
 .block-preview-text { flex:1; font-size:12px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
 .block-actions { display:flex; gap:1px; opacity:0; transition:opacity .12s; flex-shrink:0; }
@@ -231,7 +236,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <header>
   <div class="logo">Samos<span>◆</span>Planning</div>
-  <span class="version-badge">v2.2</span>
+  <span class="version-badge">v2.3</span>
   <div class="header-center">
     <input class="doc-title-input" id="docTitle" type="text" placeholder="Nom du document…" value="Samos — Été 2025">
   </div>
@@ -326,7 +331,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  var VERSION = '2.2';
+  var VERSION = '2.3';
 
   /* ── state ── */
   var blocks = [];
@@ -480,7 +485,7 @@ document.addEventListener("DOMContentLoaded", function() {
       var b = blocks[i], m = META[b.type], on = b.id === activeId;
       var badge = (b.type === 'day' && b.date) ? formatDate(b.date).slice(0, 16) : m.label;
       html +=
-        '<div class="block-card' + (on ? ' active' : '') + '" data-id="' + b.id + '">' +
+        '<div class="block-card' + (on ? ' active' : '') + '" data-id="' + b.id + '" draggable="true">' +
         '<div class="block-header" data-action="toggle" data-id="' + b.id + '">' +
         '<span class="block-handle">⠿</span>' +
         '<span class="block-type-badge ' + m.color + '">' + esc(badge) + '</span>' +
@@ -498,6 +503,80 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // field input handled by delegation on blocksList
   }
+
+  /* ── drag & drop reorder ── */
+  var dragSrcId = null;
+
+  g('blocksList').addEventListener('dragstart', function(e) {
+    // Only allow drag from the handle
+    var handle = e.target;
+    if (!handle.classList.contains('block-handle')) { e.preventDefault(); return; }
+    var card = handle.closest ? handle.closest('.block-card') : (function(el) {
+      while (el && !el.classList.contains('block-card')) el = el.parentElement; return el;
+    })(handle);
+    if (!card) return;
+    dragSrcId = card.getAttribute('data-id');
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragSrcId);
+  });
+
+  g('blocksList').addEventListener('dragend', function() {
+    dragSrcId = null;
+    var cards = g('blocksList').querySelectorAll('.block-card');
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
+    }
+  });
+
+  g('blocksList').addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    var card = e.target;
+    while (card && card !== this && !card.classList.contains('block-card')) card = card.parentElement;
+    if (!card || !card.classList.contains('block-card')) return;
+    if (card.getAttribute('data-id') === dragSrcId) return;
+    // Clear all indicators
+    var cards = g('blocksList').querySelectorAll('.block-card');
+    for (var i = 0; i < cards.length; i++) cards[i].classList.remove('drag-over-top', 'drag-over-bottom');
+    // Show indicator above or below based on mouse position
+    var rect = card.getBoundingClientRect();
+    var mid = rect.top + rect.height / 2;
+    if (e.clientY < mid) card.classList.add('drag-over-top');
+    else card.classList.add('drag-over-bottom');
+  });
+
+  g('blocksList').addEventListener('dragleave', function(e) {
+    var card = e.target;
+    while (card && card !== this && !card.classList.contains('block-card')) card = card.parentElement;
+    if (card && card.classList.contains('block-card')) {
+      card.classList.remove('drag-over-top', 'drag-over-bottom');
+    }
+  });
+
+  g('blocksList').addEventListener('drop', function(e) {
+    e.preventDefault();
+    var card = e.target;
+    while (card && card !== this && !card.classList.contains('block-card')) card = card.parentElement;
+    if (!card || !card.classList.contains('block-card')) return;
+    var targetId = card.getAttribute('data-id');
+    if (!dragSrcId || dragSrcId === targetId) return;
+
+    var srcIdx = blocks.findIndex(function(b) { return b.id === dragSrcId; });
+    var tgtIdx = blocks.findIndex(function(b) { return b.id === targetId; });
+    if (srcIdx < 0 || tgtIdx < 0) return;
+
+    // Insert above or below
+    var rect = card.getBoundingClientRect();
+    var insertAfter = e.clientY >= rect.top + rect.height / 2;
+
+    var moved = blocks.splice(srcIdx, 1)[0];
+    var newIdx = blocks.findIndex(function(b) { return b.id === targetId; });
+    if (insertAfter) newIdx++;
+    blocks.splice(newIdx, 0, moved);
+
+    render(); setActive(dragSrcId); sync();
+  });
 
   /* ── event delegation: editor list ── */
   g('blocksList').addEventListener('click', function(e) {
