@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Samos Planning v1.7</title>
+<title>Samos Planning v2.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,7 +45,10 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .btn-danger:hover { background:rgba(212,79,30,.08); }
 
 /* ── LAYOUT ── */
-.app { display:grid; grid-template-columns:255px 1fr 375px; flex:1; overflow:hidden; }
+.app { display:grid; grid-template-columns:255px 1fr 750px; flex:1; overflow:hidden; }
+  .app.preview-only .sidebar, .app.preview-only .editor { display:none; }
+  .app.preview-only { grid-template-columns:1fr; }
+  .app.preview-only .json-panel { border-left:none; }
 
 /* ── SIDEBAR ── */
 .sidebar { border-right:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow:hidden; }
@@ -152,13 +155,13 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
   border-left: 2px solid var(--border-strong);
 }
 
-/* Each hour row: time col | content col */
-.pv-row {
+/* Activity row: time col | content col */
+.pv-activity-row {
   display: grid;
   grid-template-columns: 72px 1fr;
   border-bottom: 1px solid var(--border);
 }
-.pv-row:last-child { border-bottom: none; }
+.pv-activity-row:last-child { border-bottom: none; }
 
 .pv-time {
   padding: 10px 10px 10px 0;
@@ -170,7 +173,6 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
   background: var(--surface);
   position: relative;
 }
-/* dot on the left border of timeline */
 .pv-time::before {
   content: '';
   position: absolute;
@@ -184,9 +186,8 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .pv-time-val { font-family:var(--font-mono); font-size:12px; font-weight:500; color:var(--accent); }
 .pv-time-dur { font-family:var(--font-mono); font-size:9px; color:var(--text-dim); margin-top:1px; }
 
-.pv-content { padding:10px 14px; display:flex; flex-direction:column; gap:5px; background:var(--bg); }
-
-.pv-description { font-size:13px; color:var(--text-muted); line-height:1.6; }
+.pv-activity-content { padding:10px 14px; display:flex; flex-direction:column; gap:4px; background:var(--bg); }
+.pv-activity-desc { font-size:13px; color:var(--text-muted); line-height:1.6; }
 .pv-link { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--accent); text-decoration:none; border:1px solid rgba(200,134,10,.3); padding:3px 10px; border-radius:2px; font-family:var(--font-mono); width:fit-content; }
 .pv-link:hover { background:var(--accent-light); }
 .pv-img { width:100%; max-height:130px; object-fit:cover; border-radius:3px; border:1px solid var(--border); }
@@ -229,13 +230,14 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <header>
   <div class="logo">Samos<span>◆</span>Planning</div>
-  <span class="version-badge">v1.7</span>
+  <span class="version-badge">v2.0</span>
   <div class="header-center">
     <input class="doc-title-input" id="docTitle" type="text" placeholder="Nom du document…" value="Samos — Été 2025">
   </div>
   <div class="header-actions">
     <button class="btn btn-ghost" id="btnImport">⬆ Importer</button>
     <button class="btn btn-danger" id="btnClear">✕ Vider</button>
+    <button class="btn btn-ghost" id="btnFullPreview" title="Aperçu plein écran">⛶ Aperçu</button>
     <button class="btn btn-accent" id="btnExport">⬇ Exporter JSON</button>
   </div>
 </header>
@@ -251,15 +253,11 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
         <div class="palette-icon type-day">📅</div>
         <div class="palette-info"><div class="palette-name">Jour</div><div class="palette-desc">Section de journée</div></div>
       </div>
-      <div class="palette-item" data-add="hour">
-        <div class="palette-icon type-hour">🕐</div>
-        <div class="palette-info"><div class="palette-name">Heure</div><div class="palette-desc">Créneau horaire</div></div>
+      <div class="palette-item" data-add="activity">
+        <div class="palette-icon type-activity">🎯</div>
+        <div class="palette-info"><div class="palette-name">Activité</div><div class="palette-desc">Heure · Durée · Description</div></div>
       </div>
       <div class="palette-group-label">Contenu</div>
-      <div class="palette-item" data-add="description">
-        <div class="palette-icon type-description">📝</div>
-        <div class="palette-info"><div class="palette-name">Description</div><div class="palette-desc">Texte / paragraphe</div></div>
-      </div>
       <div class="palette-item" data-add="link">
         <div class="palette-icon type-link">🔗</div>
         <div class="palette-info"><div class="palette-name">Lien</div><div class="palette-desc">URL avec label</div></div>
@@ -327,7 +325,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  var VERSION = '1.7';
+  var VERSION = '2.0';
 
   /* ── state ── */
   var blocks = [];
@@ -337,16 +335,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
   var DEFAULTS = {
     day:         { type:'day',         label:'', date:'' },
-    hour:        { type:'hour',        time:'',  duration:'' },
-    description: { type:'description', text:'' },
+    activity:    { type:'activity',     time:'',  duration:'', text:'' },
     link:        { type:'link',        label:'', url:'' },
     image:       { type:'image',       url:'',   caption:'', alt:'' }
   };
 
   var META = {
     day:         { label:'JOUR',        color:'type-day' },
-    hour:        { label:'HEURE',       color:'type-hour' },
-    description: { label:'DESCRIPTION', color:'type-description' },
+    activity:    { label:'ACTIVITÉ',    color:'type-activity' },
     link:        { label:'LIEN',        color:'type-link' },
     image:       { label:'IMAGE',       color:'type-image' }
   };
@@ -409,16 +405,21 @@ document.addEventListener("DOMContentLoaded", function() {
     var b = blocks.find(function(b) { return b.id === id; });
     if (!b) return;
     b[field] = val;
-    sync();
+    // Update the preview badge text without rebuilding the editor
     var card = document.querySelector('.block-card[data-id="' + id + '"]');
     if (card) { var p = card.querySelector('.block-preview-text'); if (p) p.textContent = preview(b); }
+    // Update JSON silently; skip preview rebuild while user is typing (avoids focus loss)
+    if (currentTab === 'json') {
+      var code = g('jsonCode');
+      if (code) code.innerHTML = blocks.length ? syntaxHL(buildJSON()) : '<span style="color:#555">// Ajoutez des blocs pour générer le JSON</span>';
+    }
+    // Preview tab: don't rebuild while user types — it will refresh on next tab switch
   }
 
   /* ── preview text (editor badge) ── */
   function preview(b) {
     if (b.type === 'day')         return b.date ? formatDate(b.date).slice(0, 20) + (b.label ? ' · ' + b.label : '') : b.label || '(jour vide)';
-    if (b.type === 'hour')        return b.time || '(heure vide)';
-    if (b.type === 'description') return b.text ? b.text.slice(0, 55) + (b.text.length > 55 ? '…' : '') : '(texte vide)';
+    if (b.type === 'activity')    return (b.time || '--:--') + (b.duration ? ' · ' + b.duration : '') + (b.text ? ' — ' + b.text.slice(0, 40) + (b.text.length > 40 ? '…' : '') : '');
     if (b.type === 'link')        return b.label || b.url || '(lien vide)';
     if (b.type === 'image')       return b.caption || b.url || '(image vide)';
     return '';
@@ -435,16 +436,14 @@ document.addEventListener("DOMContentLoaded", function() {
         '<input class="field-input" type="text" data-id="' + id + '" data-field="label" value="' + esc(b.label) + '" placeholder="Ex: Arrivée à Nice"></div>' +
       '</div>'
     );
-    if (b.type === 'hour') return (
+    if (b.type === 'activity') return (
       '<div class="field-row">' +
         '<div class="field-group"><label class="field-label">Heure</label>' +
         '<input class="field-input" type="time" data-id="' + id + '" data-field="time" value="' + esc(b.time) + '"></div>' +
         '<div class="field-group"><label class="field-label">Durée</label>' +
         '<input class="field-input" type="text" data-id="' + id + '" data-field="duration" value="' + esc(b.duration) + '" placeholder="2h30"></div>' +
-      '</div>'
-    );
-    if (b.type === 'description') return (
-      '<div class="field-group"><label class="field-label">Texte</label>' +
+      '</div>' +
+      '<div class="field-group"><label class="field-label">Description</label>' +
       '<textarea class="field-textarea" data-id="' + id + '" data-field="text" placeholder="Décrivez l\'activité…">' + esc(b.text) + '</textarea></div>'
     );
     if (b.type === 'link') return (
@@ -496,12 +495,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     list.innerHTML = html;
 
-    var inputs = list.querySelectorAll('.field-input, .field-textarea');
-    for (var j = 0; j < inputs.length; j++) {
-      (function(el) {
-        el.addEventListener('input', function() { setField(el.getAttribute('data-id'), el.getAttribute('data-field'), el.value); });
-      })(inputs[j]);
-    }
+    // field input handled by delegation on blocksList
   }
 
   /* ── event delegation: editor list ── */
@@ -523,6 +517,20 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
+  /* ── field input delegation on blocksList ── */
+  g('blocksList').addEventListener('input', function(e) {
+    var el = e.target;
+    var id = el.getAttribute('data-id');
+    var field = el.getAttribute('data-field');
+    if (id && field) setField(id, field, el.value);
+  });
+  g('blocksList').addEventListener('change', function(e) {
+    var el = e.target;
+    var id = el.getAttribute('data-id');
+    var field = el.getAttribute('data-field');
+    if (id && field) setField(id, field, el.value);
+  });
+
   /* ── palette ── */
   g('palette').addEventListener('click', function(e) {
     var el = e.target;
@@ -540,6 +548,16 @@ document.addEventListener("DOMContentLoaded", function() {
     blocks = []; activeId = null; render(); sync(); toast('Document vidé', 'ok');
   });
   g('btnExport').addEventListener('click', exportJSON);
+  g('btnFullPreview').addEventListener('click', function() {
+    var app = document.querySelector('.app');
+    var isOn = app.classList.toggle('preview-only');
+    this.textContent = isOn ? '✕ Fermer' : '⛶ Aperçu';
+    // Auto-switch to preview tab when entering fullscreen
+    if (isOn) {
+      var previewBtn = document.querySelector('.json-tab[data-tab="preview"]');
+      if (previewBtn) switchTab('preview', previewBtn);
+    }
+  });
   g('btnCopy').addEventListener('click', copyJSON);
   g('btnDownload').addEventListener('click', exportJSON);
   g('docTitle').addEventListener('input', sync);
@@ -744,22 +762,21 @@ document.addEventListener("DOMContentLoaded", function() {
         while (i < blocks.length && blocks[i].type !== 'day') {
           var cb = blocks[i];
 
-          if (cb.type === 'hour') {
-            /* hour row */
-            var row = mk('div', 'pv-row');
-            var tc  = mk('div', 'pv-time');
-            var tv  = mk('div', 'pv-time-val'); tv.textContent = cb.time || '—'; tc.appendChild(tv);
+          if (cb.type === 'activity') {
+            var row = mk('div', 'pv-activity-row');
+            /* time column */
+            var tc = mk('div', 'pv-time');
+            var tv = mk('div', 'pv-time-val'); tv.textContent = cb.time || '—'; tc.appendChild(tv);
             if (cb.duration) { var td = mk('div', 'pv-time-dur'); td.textContent = cb.duration; tc.appendChild(td); }
             row.appendChild(tc);
-            var cc = mk('div', 'pv-content');
-            i++;
-            while (i < blocks.length && blocks[i].type !== 'hour' && blocks[i].type !== 'day') {
-              addItem(cc, blocks[i]); i++;
-            }
+            /* content column */
+            var cc = mk('div', 'pv-activity-content');
+            if (cb.text) { var desc = mk('p', 'pv-activity-desc'); desc.textContent = cb.text; cc.appendChild(desc); }
             row.appendChild(cc);
             tl.appendChild(row);
+            i++;
           } else {
-            /* content without hour */
+            /* link/image without activity */
             var orp = mk('div', 'pv-orphan');
             addItem(orp, cb);
             tl.appendChild(orp);
@@ -779,9 +796,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   function addItem(parent, b) {
-    if (b.type === 'description') {
-      var p = mk('p', 'pv-description'); p.textContent = b.text; parent.appendChild(p);
-    } else if (b.type === 'link') {
+    if (b.type === 'link') {
       var a = mk('a', 'pv-link'); a.href = b.url || '#'; a.target = '_blank';
       a.textContent = '🔗 ' + (b.label || b.url || 'Lien'); parent.appendChild(a);
     } else if (b.type === 'image') {
@@ -796,20 +811,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
   /* ── demo data ── */
   blocks = [
-    { id:uid(), type:'day',         date:'2025-07-15', label:'Arrivée à Nice' },
-    { id:uid(), type:'hour',        time:'14:00',       duration:'2h' },
-    { id:uid(), type:'description', text:"Arrivée à l'aéroport de Nice Côte d'Azur. Récupération des bagages et transfert vers l'hôtel." },
-    { id:uid(), type:'link',        label:'Réservation hôtel Negresco', url:'https://www.lenegresco.com' },
-    { id:uid(), type:'hour',        time:'19:30',       duration:'1h30' },
-    { id:uid(), type:'description', text:'Dîner de bienvenue sur la Promenade des Anglais. Restaurant Le Plongeoir, vue mer exceptionnelle.' },
-    { id:uid(), type:'image',       url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Nice_Promenade_des_Anglais.jpg/1280px-Nice_Promenade_des_Anglais.jpg', caption:'La Promenade des Anglais, Nice', alt:'Promenade des Anglais' },
-    { id:uid(), type:'day',         date:'2025-07-16', label:'Monaco' },
-    { id:uid(), type:'hour',        time:'09:00',       duration:'1h' },
-    { id:uid(), type:'description', text:'Départ en train vers Monaco. Visite du Palais du Prince et des jardins exotiques.' },
-    { id:uid(), type:'link',        label:'Infos Palais Princier', url:'https://www.palais.mc' },
-    { id:uid(), type:'hour',        time:'14:00',       duration:'3h' },
-    { id:uid(), type:'description', text:'Après-midi au Casino de Monte-Carlo et promenade dans le quartier de la Condamine.' },
-    { id:uid(), type:'image',       url:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Monte_carlo_casino_2019.jpg/1280px-Monte_carlo_casino_2019.jpg', caption:'Casino de Monte-Carlo', alt:'Casino de Monte-Carlo' }
+    { id:uid(), type:'day',      date:'2025-07-15', label:'Arrivée à Nice' },
+    { id:uid(), type:'activity', time:'14:00', duration:'2h',   text:"Arrivée à l'aéroport de Nice Côte d'Azur. Récupération des bagages et transfert vers l'hôtel." },
+    { id:uid(), type:'link',     label:'Réservation hôtel Negresco', url:'https://www.lenegresco.com' },
+    { id:uid(), type:'activity', time:'19:30', duration:'1h30', text:'Dîner de bienvenue sur la Promenade des Anglais. Restaurant Le Plongeoir, vue mer exceptionnelle.' },
+    { id:uid(), type:'image',    url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Nice_Promenade_des_Anglais.jpg/1280px-Nice_Promenade_des_Anglais.jpg', caption:'La Promenade des Anglais, Nice', alt:'Promenade des Anglais' },
+    { id:uid(), type:'day',      date:'2025-07-16', label:'Monaco' },
+    { id:uid(), type:'activity', time:'09:00', duration:'1h',   text:'Départ en train vers Monaco. Visite du Palais du Prince et des jardins exotiques.' },
+    { id:uid(), type:'link',     label:'Infos Palais Princier', url:'https://www.palais.mc' },
+    { id:uid(), type:'activity', time:'14:00', duration:'3h',   text:'Après-midi au Casino de Monte-Carlo et promenade dans le quartier de la Condamine.' },
+    { id:uid(), type:'image',    url:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Monte_carlo_casino_2019.jpg/1280px-Monte_carlo_casino_2019.jpg', caption:'Casino de Monte-Carlo', alt:'Casino de Monte-Carlo' }
   ];
 
   render();
