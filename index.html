@@ -46,16 +46,30 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .btn-danger:hover { background:rgba(212,79,30,.08); }
 
 /* ── LAYOUT ── */
-.app { display:grid; grid-template-columns:1fr; flex:1; overflow:hidden; min-height:0; }
+.app { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
+
+  /* Default: preview only */
   .sidebar, .editor { display:none; }
-  .app.edit-mode { grid-template-columns:255px 1fr 1fr; }
-  .app.edit-mode .preview-panel { display:flex; flex-direction:column; border-left:1px solid var(--border); }
-  .app.edit-mode .sidebar { display:flex; }
-  .app.edit-mode .editor { display:flex; }
+  .block-adder { display:none; }
   .preview-panel { flex:1; overflow-y:auto; background:var(--bg); }
 
+  /* Edit mode */
+  .app.edit-mode { display:flex; flex-direction:column; }
+  .app.edit-mode .block-adder { display:flex; align-items:center; gap:8px; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap; }
+  .app.edit-mode .edit-body { display:flex; flex:1; overflow:hidden; min-height:0; }
+  .app.edit-mode .editor { display:flex; flex:1; min-width:0; border-right:1px solid var(--border); }
+  .app.edit-mode .preview-panel { flex:1; min-width:0; border-left:none; }
+  .app.edit-mode .sidebar { display:none; }
+
+  /* Block adder bar */
+  .block-adder-label { font-size:11px; font-weight:600; color:var(--text-muted); white-space:nowrap; }
+  .block-adder-select { padding:7px 12px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface2); color:var(--text); font-family:var(--font-body); font-size:13px; cursor:pointer; outline:none; min-width:200px; }
+  .block-adder-select:focus { border-color:var(--accent); }
+  .block-adder-add { padding:7px 18px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; transition:background .15s; }
+  .block-adder-add:hover { background:#b07508; }
+
 /* ── SIDEBAR ── */
-.sidebar { border-right:1px solid var(--border); background:var(--surface); display:none; flex-direction:column; overflow:hidden; }
+.sidebar { display:none; }
 .sidebar-header { padding:12px 14px; border-bottom:1px solid var(--border); font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); background:var(--surface2); }
 .block-palette { padding:8px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; }
 .palette-group-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); padding:8px 4px 3px; font-weight:600; }
@@ -257,53 +271,46 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <div class="app">
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="sidebar-header">Blocs disponibles</div>
-    <div class="block-palette" id="palette">
-      <div class="palette-group-label">Structure</div>
-      <div class="palette-item" data-add="day">
-        <div class="palette-icon type-day">📅</div>
-        <div class="palette-info"><div class="palette-name">Jour</div><div class="palette-desc">Section de journée</div></div>
-      </div>
-      <div class="palette-item" data-add="activity">
-        <div class="palette-icon type-activity">🎯</div>
-        <div class="palette-info"><div class="palette-name">Activité</div><div class="palette-desc">Heure · Durée · Description</div></div>
-      </div>
-      <div class="palette-group-label">Contenu</div>
-      <div class="palette-item" data-add="link">
-        <div class="palette-icon type-link">🔗</div>
-        <div class="palette-info"><div class="palette-name">Lien</div><div class="palette-desc">URL avec label</div></div>
-      </div>
-      <div class="palette-item" data-add="image">
-        <div class="palette-icon type-image">🖼</div>
-        <div class="palette-info"><div class="palette-name">Image</div><div class="palette-desc">URL + légende</div></div>
-      </div>
-    </div>
+  <!-- BLOCK ADDER BAR (edit mode only) -->
+  <div class="block-adder">
+    <span class="block-adder-label">Ajouter un bloc&nbsp;:</span>
+    <select class="block-adder-select" id="blockTypeSelect">
+      <option value="">— Choisir un type —</option>
+      <option value="day">📅 Jour</option>
+      <option value="activity">🎯 Activité</option>
+      <option value="link">🔗 Lien</option>
+      <option value="image">🖼 Image</option>
+    </select>
+    <button class="block-adder-add" id="btnAddBlock">+ Ajouter</button>
   </div>
 
-  <!-- EDITOR -->
-  <div class="editor">
-    <div class="editor-toolbar">
-      <span>✦ Éditeur de blocs</span>
-      <span class="block-count" id="blockCount">0 bloc(s)</span>
-    </div>
-    <div class="editor-body">
-      <div class="empty-state" id="emptyState">
-        <div class="icon">◈</div>
-        <h3>Document vide</h3>
-        <p>Cliquez sur un bloc dans la palette pour commencer.</p>
+  <!-- EDITOR + PREVIEW (side by side in edit mode) -->
+  <div class="edit-body">
+
+    <!-- EDITOR -->
+    <div class="editor">
+      <div class="editor-toolbar">
+        <span>✦ Éditeur de blocs</span>
+        <span class="block-count" id="blockCount">0 bloc(s)</span>
       </div>
-      <div class="blocks-list" id="blocksList"></div>
+      <div class="editor-body">
+        <div class="empty-state" id="emptyState">
+          <div class="icon">◈</div>
+          <h3>Document vide</h3>
+          <p>Cliquez sur un bloc ci-dessus pour commencer.</p>
+        </div>
+        <div class="blocks-list" id="blocksList"></div>
+      </div>
     </div>
+
+    <!-- PREVIEW -->
+    <div class="preview-panel" id="previewPanel">
+      <div id="previewArea"></div>
+    </div>
+
   </div>
 
-  <!-- PREVIEW (always visible, full width by default) -->
-  <div class="preview-panel" id="previewPanel">
-    <div id="previewArea"></div>
-  </div>
-
-  <!-- boutons export dans le header uniquement -->
+  <!-- hidden JSON helpers -->
   <div id="jsonContent" style="display:none"><div id="jsonCode"></div></div>
 
 </div>
@@ -647,14 +654,13 @@ document.addEventListener("DOMContentLoaded", function() {
     if (id && field) setField(id, field, el.value);
   });
 
-  /* ── palette ── */
-  g('palette').addEventListener('click', function(e) {
-    var el = e.target;
-    while (el && el !== this) {
-      var t = el.getAttribute('data-add');
-      if (t) { addBlock(t); return; }
-      el = el.parentElement;
-    }
+  /* ── block adder ── */
+  g('btnAddBlock').addEventListener('click', function() {
+    var sel = g('blockTypeSelect');
+    var type = sel.value;
+    if (!type) return;
+    addBlock(type);
+    sel.value = '';
   });
 
   /* ── header ── */
