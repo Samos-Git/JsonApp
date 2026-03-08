@@ -480,9 +480,21 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (blocks.length === 0) { list.innerHTML = ''; return; }
 
+    // Save which blocks are currently open (not collapsed)
+    var openIds = {};
+    var existing = list.querySelectorAll('.block-card');
+    for (var e = 0; e < existing.length; e++) {
+      var eid = existing[e].getAttribute('data-id');
+      var body = existing[e].querySelector('.block-body');
+      if (body && !body.classList.contains('collapsed')) openIds[eid] = true;
+    }
+
     var html = '';
     for (var i = 0; i < blocks.length; i++) {
-      var b = blocks[i], m = META[b.type], on = b.id === activeId;
+      var b = blocks[i], m = META[b.type];
+      var on = b.id === activeId;
+      // A block is open if it's the active one, OR it was open before render
+      var isOpen = on || openIds[b.id];
       var badge = (b.type === 'day' && b.date) ? formatDate(b.date).slice(0, 16) : m.label;
       html +=
         '<div class="block-card' + (on ? ' active' : '') + '" data-id="' + b.id + '">' +
@@ -496,7 +508,7 @@ document.addEventListener("DOMContentLoaded", function() {
         '<button class="block-action-btn" data-action="dup" data-id="' + b.id + '">⎘</button>' +
         '<button class="block-action-btn del" data-action="del" data-id="' + b.id + '">✕</button>' +
         '</div></div>' +
-        '<div class="block-body' + (on ? '' : ' collapsed') + '">' + fields(b) + '<button class="btn-validate" data-action="validate" data-id="' + b.id + '">Valider</button></div>' +
+        '<div class="block-body' + (isOpen ? '' : ' collapsed') + '">' + fields(b) + '<button class="btn-validate" data-action="validate" data-id="' + b.id + '">Valider</button></div>' +
         '</div>';
     }
     list.innerHTML = html;
