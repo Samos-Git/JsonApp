@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Samos Planning v2.3</title>
+<title>Samos Planning v2.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,13 +45,16 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .btn-danger:hover { background:rgba(212,79,30,.08); }
 
 /* ── LAYOUT ── */
-.app { display:grid; grid-template-columns:255px 1fr 750px; flex:1; overflow:hidden; min-height:0; }
-  .app.preview-only .sidebar, .app.preview-only .editor { display:none; }
-  .app.preview-only { grid-template-columns:1fr; }
-  .app.preview-only .json-panel { border-left:none; }
+.app { display:grid; grid-template-columns:1fr; flex:1; overflow:hidden; min-height:0; }
+  .sidebar, .editor { display:none; }
+  .app.edit-mode { grid-template-columns:255px 1fr 1000px; }
+  .app.edit-mode .preview-panel { display:flex; flex-direction:column; border-left:1px solid var(--border); }
+  .app.edit-mode .sidebar { display:flex; }
+  .app.edit-mode .editor { display:flex; }
+  .preview-panel { flex:1; overflow-y:auto; background:var(--bg); }
 
 /* ── SIDEBAR ── */
-.sidebar { border-right:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow:hidden; }
+.sidebar { border-right:1px solid var(--border); background:var(--surface); display:none; flex-direction:column; overflow:hidden; }
 .sidebar-header { padding:12px 14px; border-bottom:1px solid var(--border); font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); background:var(--surface2); }
 .block-palette { padding:8px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; }
 .palette-group-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); padding:8px 4px 3px; font-weight:600; }
@@ -64,7 +67,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .palette-desc { font-size:10px; color:var(--text-muted); margin-top:1px; }
 
 /* ── EDITOR ── */
-.editor { display:flex; flex-direction:column; overflow:hidden; background:var(--bg); min-height:0; }
+.editor { display:none; flex-direction:column; overflow:hidden; background:var(--bg); min-height:0; }
 .editor-toolbar { display:flex; align-items:center; padding:9px 14px; border-bottom:1px solid var(--border); background:var(--surface); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 .block-count { margin-left:auto; font-family:var(--font-mono); font-size:11px; color:var(--text-dim); }
 .editor-body { flex:1; overflow:hidden; position:relative; display:flex; flex-direction:column; min-height:0; height:0; }
@@ -111,7 +114,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .type-image       { background:rgba(200,80,150,.1);  color:#c83090; }
 
 /* ── JSON PANEL ── */
-.json-panel { border-left:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow:hidden; }
+/* json-panel display managed by edit-mode */
 .json-tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface2); }
 .json-tab { padding:11px 16px; font-size:11px; font-weight:600; letter-spacing:.5px; cursor:pointer; border:none; background:none; color:var(--text-muted); border-bottom:2px solid transparent; transition:all .12s; }
 .json-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:var(--surface); }
@@ -236,14 +239,15 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <header>
   <div class="logo">Samos<span>◆</span>Planning</div>
-  <span class="version-badge">v2.3</span>
+  <span class="version-badge">v2.6</span>
   <div class="header-center">
     <input class="doc-title-input" id="docTitle" type="text" placeholder="Nom du document…" value="Samos — Été 2025">
   </div>
   <div class="header-actions">
     <button class="btn btn-ghost" id="btnImport">⬆ Importer</button>
     <button class="btn btn-danger" id="btnClear">✕ Vider</button>
-    <button class="btn btn-ghost" id="btnFullPreview" title="Aperçu plein écran">⛶ Aperçu</button>
+    <button class="btn btn-edit" id="btnEdit">✏ Édition</button>
+    <button class="btn btn-ghost" id="btnCopy">⎘ Copier JSON</button>
     <button class="btn btn-accent" id="btnExport">⬇ Exporter JSON</button>
   </div>
 </header>
@@ -291,20 +295,13 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
     </div>
   </div>
 
-  <!-- JSON / PREVIEW -->
-  <div class="json-panel">
-    <div class="json-tabs">
-      <button class="json-tab active" data-tab="json">JSON</button>
-      <button class="json-tab" data-tab="preview">Aperçu</button>
-    </div>
-    <div class="json-content" id="jsonContent">
-      <div class="json-code" id="jsonCode">// Ajoutez des blocs pour générer le JSON</div>
-    </div>
-    <div class="panel-actions">
-      <button class="btn btn-ghost" style="flex:1" id="btnCopy">⎘ Copier</button>
-      <button class="btn btn-accent" style="flex:1" id="btnDownload">⬇ Télécharger</button>
-    </div>
+  <!-- PREVIEW (always visible, full width by default) -->
+  <div class="preview-panel" id="previewPanel">
+    <div id="previewArea"></div>
   </div>
+
+  <!-- boutons export dans le header uniquement -->
+  <div id="jsonContent" style="display:none"><div id="jsonCode"></div></div>
 
 </div>
 
@@ -331,11 +328,12 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  var VERSION = '2.3';
+  var VERSION = '2.6';
 
   /* ── state ── */
   var blocks = [];
-  var currentTab = 'json';
+  var currentTab = 'preview';
+  var editMode = false;
   var activeId = null;
   var pendingImport = null;
 
@@ -396,18 +394,26 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   function setActive(id) {
-    activeId = id;
-    var cards = document.querySelectorAll('.block-card');
-    for (var i = 0; i < cards.length; i++) {
-      var card = cards[i];
-      var on = card.getAttribute('data-id') === id;
-      card.classList.toggle('active', on);
-      // Only open the newly active block — never collapse others
-      if (on) {
-        var body = card.querySelector('.block-body');
-        if (body) body.classList.remove('collapsed');
-      }
+    var card = document.querySelector('.block-card[data-id="' + id + '"]');
+    if (!card) return;
+    var body = card.querySelector('.block-body');
+    if (!body) return;
+
+    if (activeId === id) {
+      // Clicking the already-active block: toggle it closed
+      var closing = !body.classList.contains('collapsed');
+      body.classList.toggle('collapsed', closing);
+      if (closing) { activeId = null; card.classList.remove('active'); }
+      return;
     }
+
+    // Activate new block: open it, mark active (don't touch others)
+    activeId = id;
+    var allCards = document.querySelectorAll('.block-card');
+    for (var i = 0; i < allCards.length; i++) {
+      allCards[i].classList.toggle('active', allCards[i].getAttribute('data-id') === id);
+    }
+    body.classList.remove('collapsed');
   }
 
   function setField(id, field, val) {
@@ -497,7 +503,7 @@ document.addEventListener("DOMContentLoaded", function() {
       var b = blocks[i], m = META[b.type];
       var on = b.id === activeId;
       // Known block: restore its state. New block: open only if it's the active one.
-      var isOpen = (b.id in openState) ? openState[b.id] : on;
+      var isOpen = (b.id in openState) ? openState[b.id] : on; // known: restore; new: open only if active
       var badge = (b.type === 'day' && b.date) ? formatDate(b.date).slice(0, 16) : m.label;
       html +=
         '<div class="block-card' + (on ? ' active' : '') + '" data-id="' + b.id + '">' +
@@ -655,27 +661,20 @@ document.addEventListener("DOMContentLoaded", function() {
     blocks = []; activeId = null; render(); sync(); toast('Document vidé', 'ok');
   });
   g('btnExport').addEventListener('click', exportJSON);
-  g('btnFullPreview').addEventListener('click', function() {
+  g('btnEdit').addEventListener('click', function() {
+    editMode = !editMode;
     var app = document.querySelector('.app');
-    var isOn = app.classList.toggle('preview-only');
-    this.textContent = isOn ? '✕ Fermer' : '⛶ Aperçu';
-    // Auto-switch to preview tab when entering fullscreen
-    if (isOn) {
-      var previewBtn = document.querySelector('.json-tab[data-tab="preview"]');
-      if (previewBtn) switchTab('preview', previewBtn);
-    }
+    app.classList.toggle('edit-mode', editMode);
+    this.textContent = editMode ? '✕ Fermer' : '✏ Édition';
+    this.classList.toggle('active', editMode);
+    if (editMode) sync(); // refresh JSON panel when opening
   });
   g('btnCopy').addEventListener('click', copyJSON);
-  g('btnDownload').addEventListener('click', exportJSON);
+
   g('docTitle').addEventListener('input', sync);
 
   /* ── tabs ── */
-  var tabBtns = document.querySelectorAll('.json-tab');
-  for (var t = 0; t < tabBtns.length; t++) {
-    (function(btn) {
-      btn.addEventListener('click', function() { switchTab(btn.getAttribute('data-tab'), btn); });
-    })(tabBtns[t]);
-  }
+  // Tab switching handled by btnEdit button
 
   /* ── JSON build & output ── */
   function buildJSON() {
@@ -702,36 +701,18 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   function sync() {
-    if (currentTab === 'json') {
+    // Always update preview
+    var area = g('previewArea');
+    area.innerHTML = '';
+    area.appendChild(buildPreview());
+    // Update JSON panel if in edit mode
+    if (editMode) {
       var code = g('jsonCode');
       code.innerHTML = blocks.length ? syntaxHL(buildJSON()) : '<span style="color:#555">// Ajoutez des blocs pour générer le JSON</span>';
-    } else {
-      var content = g('jsonContent');
-      var old = content.querySelector('.preview-wrap');
-      if (old) content.removeChild(old);
-      var pw = buildPreview();
-      content.appendChild(pw);
     }
   }
 
-  function switchTab(tab, btn) {
-    currentTab = tab;
-    var allTabs = document.querySelectorAll('.json-tab');
-    for (var ti = 0; ti < allTabs.length; ti++) allTabs[ti].classList.remove('active');
-    btn.classList.add('active');
-    var content = g('jsonContent');
-    var code = g('jsonCode');
-    if (tab === 'json') {
-      content.style.background = '#1e1e2e';
-      code.style.display = 'block';
-      var prev = content.querySelector('.preview-wrap');
-      if (prev) prev.style.display = 'none';
-    } else {
-      content.style.background = 'var(--bg)';
-      code.style.display = 'none';
-    }
-    sync();
-  }
+  // switchTab removed — preview always on, JSON only in edit mode
 
   /* ── clipboard / export ── */
   function copyJSON() {
