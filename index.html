@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Samos Planning v2.1</title>
+<title>Samos Planning v2.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -230,7 +230,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <header>
   <div class="logo">Samos<span>◆</span>Planning</div>
-  <span class="version-badge">v2.1</span>
+  <span class="version-badge">v2.2</span>
   <div class="header-center">
     <input class="doc-title-input" id="docTitle" type="text" placeholder="Nom du document…" value="Samos — Été 2025">
   </div>
@@ -325,7 +325,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  var VERSION = '2.1';
+  var VERSION = '2.2';
 
   /* ── state ── */
   var blocks = [];
@@ -741,6 +741,33 @@ document.addEventListener("DOMContentLoaded", function() {
 
   function buildPreview() {
     var wrap = mk('div', 'preview-wrap');
+
+    // Toolbar with collapse-all / expand-all
+    var toolbar = mk('div', 'pv-toolbar');
+    var btnCollapse = mk('button', 'pv-toolbar-btn'); btnCollapse.textContent = '⊟ Tout replier';
+    var btnExpand   = mk('button', 'pv-toolbar-btn'); btnExpand.textContent   = '⊞ Tout déplier';
+    btnCollapse.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var days = wrap.querySelectorAll('.pv-day');
+      for (var d = 0; d < days.length; d++) {
+        days[d].classList.add('collapsed');
+        var tl = days[d].nextSibling;
+        if (tl && tl.classList && tl.classList.contains('pv-timeline')) tl.style.display = 'none';
+      }
+    });
+    btnExpand.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var days = wrap.querySelectorAll('.pv-day');
+      for (var d = 0; d < days.length; d++) {
+        days[d].classList.remove('collapsed');
+        var tl = days[d].nextSibling;
+        if (tl && tl.classList && tl.classList.contains('pv-timeline')) tl.style.display = '';
+      }
+    });
+    toolbar.appendChild(btnCollapse);
+    toolbar.appendChild(btnExpand);
+    wrap.appendChild(toolbar);
+
     var i = 0;
 
     while (i < blocks.length) {
@@ -761,7 +788,18 @@ document.addEventListener("DOMContentLoaded", function() {
           var sep = mk('span', 'pv-day-sep'); sep.textContent = '·'; header.appendChild(sep);
           var lblEl = mk('span', 'pv-day-label'); lblEl.textContent = b.label; header.appendChild(lblEl);
         }
+        var chev = mk('span', 'pv-day-chevron'); chev.textContent = '▾';
+        header.appendChild(chev);
         dayDiv.appendChild(header);
+        dayDiv.addEventListener('click', function(el) {
+          return function() {
+            el.classList.toggle('collapsed');
+            var tl = el.nextSibling;
+            if (tl && tl.classList && tl.classList.contains('pv-timeline')) {
+              tl.style.display = el.classList.contains('collapsed') ? 'none' : '';
+            }
+          };
+        }(dayDiv));
         wrap.appendChild(dayDiv);
         i++;
 
