@@ -402,8 +402,11 @@ document.addEventListener("DOMContentLoaded", function() {
       var card = cards[i];
       var on = card.getAttribute('data-id') === id;
       card.classList.toggle('active', on);
-      var body = card.querySelector('.block-body');
-      if (body) body.classList.toggle('collapsed', !on);
+      // Only open the newly active block — never collapse others
+      if (on) {
+        var body = card.querySelector('.block-body');
+        if (body) body.classList.remove('collapsed');
+      }
     }
   }
 
