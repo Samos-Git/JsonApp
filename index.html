@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Samos Planning v2.6</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -32,7 +32,8 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .logo { font-family:var(--font-display); font-size:17px; font-weight:900; letter-spacing:-.5px; color:var(--text); white-space:nowrap; }
 .logo span { color:var(--accent); }
 .version-badge { font-family:var(--font-mono); font-size:10px; color:var(--text-dim); background:var(--surface2); border:1px solid var(--border); padding:2px 7px; border-radius:10px; flex-shrink:0; }
-.header-center { flex:1; max-width:360px; }
+.header-center { flex:1; max-width:360px; display:none; }
+  .header-center.visible { display:block; }
 .doc-title-input { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--font-body); font-size:13px; padding:6px 12px; border-radius:var(--radius); width:100%; outline:none; transition:border-color .2s; }
 .doc-title-input:focus { border-color:var(--accent); background:#fff; }
 .header-actions { display:flex; gap:6px; align-items:center; margin-left:auto; }
@@ -47,7 +48,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 /* ── LAYOUT ── */
 .app { display:grid; grid-template-columns:1fr; flex:1; overflow:hidden; min-height:0; }
   .sidebar, .editor { display:none; }
-  .app.edit-mode { grid-template-columns:255px 1fr 1000px; }
+  .app.edit-mode { grid-template-columns:255px 1fr 1fr; }
   .app.edit-mode .preview-panel { display:flex; flex-direction:column; border-left:1px solid var(--border); }
   .app.edit-mode .sidebar { display:flex; }
   .app.edit-mode .editor { display:flex; }
@@ -130,6 +131,8 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 /* ── PREVIEW ── */
 .preview-wrap { overflow-y:auto; font-family:var(--font-body); background:var(--bg); height:100%; }
+  .pv-doc-title { padding:36px 32px 28px; background:var(--surface); border-bottom:3px solid #484ddb; }
+  .pv-doc-title-text { font-family:'Segoe Print', 'Pacifico', cursive; font-size:42px; font-weight:700; color:#6B2D8B; line-height:1.1; letter-spacing:0; }
 
 /* Day block — full-width dark band */
 .pv-day {
@@ -667,7 +670,9 @@ document.addEventListener("DOMContentLoaded", function() {
     app.classList.toggle('edit-mode', editMode);
     this.textContent = editMode ? '✕ Fermer' : '✏ Édition';
     this.classList.toggle('active', editMode);
-    if (editMode) sync(); // refresh JSON panel when opening
+    var hc = document.querySelector('.header-center');
+    if (hc) hc.classList.toggle('visible', editMode);
+    if (editMode) sync();
   });
   g('btnCopy').addEventListener('click', copyJSON);
 
@@ -822,6 +827,13 @@ document.addEventListener("DOMContentLoaded", function() {
     var wrap = mk('div', 'preview-wrap');
 
     // Toolbar with collapse-all / expand-all
+    // Doc title block
+    var titleBlock = mk('div', 'pv-doc-title');
+    var titleText = mk('div', 'pv-doc-title-text');
+    titleText.textContent = g('docTitle').value || 'Document';
+    titleBlock.appendChild(titleText);
+    wrap.appendChild(titleBlock);
+
     var toolbar = mk('div', 'pv-toolbar');
     var btnCollapse = mk('button', 'pv-toolbar-btn'); btnCollapse.textContent = '⊟ Tout replier';
     var btnExpand   = mk('button', 'pv-toolbar-btn'); btnExpand.textContent   = '⊞ Tout déplier';
