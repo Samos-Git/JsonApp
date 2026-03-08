@@ -480,22 +480,21 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (blocks.length === 0) { list.innerHTML = ''; return; }
 
-    // Save which blocks are currently COLLAPSED (to restore state after rebuild)
-    var collapsedIds = {};
+    // Snapshot open/closed state of every visible block before rebuilding
+    var openState = {}; // id -> true (open) or false (collapsed)
     var existing = list.querySelectorAll('.block-card');
     for (var e = 0; e < existing.length; e++) {
       var eid = existing[e].getAttribute('data-id');
       var body = existing[e].querySelector('.block-body');
-      if (body && body.classList.contains('collapsed')) collapsedIds[eid] = true;
+      openState[eid] = body ? !body.classList.contains('collapsed') : false;
     }
 
     var html = '';
     for (var i = 0; i < blocks.length; i++) {
       var b = blocks[i], m = META[b.type];
       var on = b.id === activeId;
-      // New blocks (not yet in DOM) start collapsed unless they are the active one
-      var wasCollapsed = (b.id in collapsedIds) ? collapsedIds[b.id] : !on;
-      var isOpen = on || !wasCollapsed;
+      // Known block: restore its state. New block: open only if it's the active one.
+      var isOpen = (b.id in openState) ? openState[b.id] : on;
       var badge = (b.type === 'day' && b.date) ? formatDate(b.date).slice(0, 16) : m.label;
       html +=
         '<div class="block-card' + (on ? ' active' : '') + '" data-id="' + b.id + '">' +
