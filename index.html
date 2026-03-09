@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Samos Planning v2.6</title>
+<title>Samos Planning v2.7</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,6 +35,8 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .header-center { flex:1; max-width:360px; display:none; }
   .header-center.visible { display:block; }
 .doc-title-input { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--font-body); font-size:13px; padding:6px 12px; border-radius:var(--radius); width:100%; outline:none; transition:border-color .2s; }
+  .header-center.visible #docTitle { flex:1; min-width:0; width:auto; }
+  .header-center.visible #titleImgUrl { flex:1; min-width:0; width:auto; }
 .doc-title-input:focus { border-color:var(--accent); background:#fff; }
 .header-actions { display:flex; gap:6px; align-items:center; margin-left:auto; }
 .btn { padding:6px 13px; border-radius:var(--radius); font-family:var(--font-body); font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; white-space:nowrap; }
@@ -51,14 +53,17 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
   /* Default: preview only */
   .sidebar, .editor { display:none; }
   .block-adder { display:none; }
-  .preview-panel { flex:1; overflow-y:auto; background:var(--bg); }
+  .preview-panel { flex:1; overflow-y:auto; background:var(--bg); min-height:0; }
+
+  /* edit-body hidden by default */
+  .edit-body { display:none; }
 
   /* Edit mode */
-  .app.edit-mode { display:flex; flex-direction:column; }
-  .app.edit-mode .block-adder { display:flex; align-items:center; gap:8px; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap; }
-  .app.edit-mode .edit-body { display:flex; flex:1; overflow:hidden; min-height:0; }
-  .app.edit-mode .editor { display:flex; flex:1; min-width:0; border-right:1px solid var(--border); }
-  .app.edit-mode .preview-panel { flex:1; min-width:0; border-left:none; }
+  .app.edit-mode { display:grid; grid-template-rows:auto 1fr; grid-template-columns:1fr 1fr; }
+  .app.edit-mode .block-adder { display:flex; grid-column:1/-1; align-items:center; gap:8px; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap; }
+  .app.edit-mode .edit-body { display:flex; overflow:hidden; min-height:0; border-right:1px solid var(--border); }
+  .app.edit-mode .editor { display:flex; flex:1; min-width:0; }
+  .app.edit-mode .preview-panel { overflow-y:auto; border-left:none; }
   .app.edit-mode .sidebar { display:none; }
 
   /* Block adder bar */
@@ -144,8 +149,9 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .panel-actions { flex-shrink:0; padding:10px 12px; background:var(--surface); border-top:1px solid var(--border); display:flex; gap:6px; }
 
 /* ── PREVIEW ── */
-.preview-wrap { overflow-y:auto; font-family:var(--font-body); background:var(--bg); height:100%; }
-  .pv-doc-title { padding:36px 32px 28px; background:var(--surface); border-bottom:3px solid #484ddb; }
+.preview-wrap { font-family:var(--font-body); background:var(--bg); }
+  .pv-doc-title { padding:36px 32px 28px; background:var(--surface); border-bottom:3px solid #484ddb; display:flex; align-items:center; gap:20px; }
+  .pv-doc-title-img { width:72px; height:72px; object-fit:cover; border-radius:8px; flex-shrink:0; }
   .pv-doc-title-text { font-family:'Segoe Print', 'Pacifico', cursive; font-size:42px; font-weight:700; color:#6B2D8B; line-height:1.1; letter-spacing:0; }
 
 /* Day block — full-width dark band */
@@ -256,9 +262,11 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <header>
   <div class="logo">Samos<span>◆</span>Planning</div>
-  <span class="version-badge">v2.6</span>
+  <span class="version-badge">v2.7</span>
   <div class="header-center">
     <input class="doc-title-input" id="docTitle" type="text" placeholder="Nom du document…" value="Samos — Été 2025">
+<input class="doc-title-input title-img-input" id="titleImgUrl" type="text" placeholder="🖼 URL image (optionnel)…">
+    <button class="title-img-clear" id="btnClearTitleImg" title="Supprimer l'image">✕</button>
   </div>
   <div class="header-actions">
     <button class="btn btn-ghost" id="btnImport">⬆ Importer</button>
@@ -284,10 +292,8 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
     <button class="block-adder-add" id="btnAddBlock">+ Ajouter</button>
   </div>
 
-  <!-- EDITOR + PREVIEW (side by side in edit mode) -->
+  <!-- EDITOR (edit mode only) -->
   <div class="edit-body">
-
-    <!-- EDITOR -->
     <div class="editor">
       <div class="editor-toolbar">
         <span>✦ Éditeur de blocs</span>
@@ -302,12 +308,11 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
         <div class="blocks-list" id="blocksList"></div>
       </div>
     </div>
+  </div>
 
-    <!-- PREVIEW -->
-    <div class="preview-panel" id="previewPanel">
-      <div id="previewArea"></div>
-    </div>
-
+  <!-- PREVIEW (always visible, direct child of .app) -->
+  <div class="preview-panel" id="previewPanel">
+    <div id="previewArea"></div>
   </div>
 
   <!-- hidden JSON helpers -->
@@ -338,7 +343,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  var VERSION = '2.6';
+  var VERSION = '2.7';
 
   /* ── state ── */
   var blocks = [];
@@ -683,6 +688,11 @@ document.addEventListener("DOMContentLoaded", function() {
   g('btnCopy').addEventListener('click', copyJSON);
 
   g('docTitle').addEventListener('input', sync);
+  g('titleImgUrl').addEventListener('input', sync);
+  g('btnClearTitleImg').addEventListener('click', function() {
+    g('titleImgUrl').value = '';
+    sync();
+  });
 
   /* ── tabs ── */
   // Tab switching handled by btnEdit button
@@ -835,6 +845,14 @@ document.addEventListener("DOMContentLoaded", function() {
     // Toolbar with collapse-all / expand-all
     // Doc title block
     var titleBlock = mk('div', 'pv-doc-title');
+    var imgUrl = g('titleImgUrl') ? g('titleImgUrl').value.trim() : '';
+    if (imgUrl) {
+      var titleImg = document.createElement('img');
+      titleImg.className = 'pv-doc-title-img';
+      titleImg.src = imgUrl;
+      titleImg.alt = '';
+      titleBlock.appendChild(titleImg);
+    }
     var titleText = mk('div', 'pv-doc-title-text');
     titleText.textContent = g('docTitle').value || 'Document';
     titleBlock.appendChild(titleText);
