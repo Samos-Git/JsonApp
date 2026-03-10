@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Samos Planning v2.7</title>
+<title>Samos Planning v2.9</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -219,6 +219,12 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 .pv-activity-content { padding:10px 14px; display:flex; flex-direction:column; gap:4px; background:var(--bg); }
 .pv-activity-desc { font-size:13px; color:var(--text-muted); line-height:1.6; }
+.pv-memo-row { background:#fff0f0; }
+.pv-memo-row .pv-time { background:#ffe0e0; border-right-color:#ffb3b3; }
+.pv-memo-row .pv-time-val { color:#c0392b; }
+.pv-memo-row .pv-time::before { background:#c0392b; }
+.pv-memo-row .pv-activity-content { background:#fff5f5; }
+.pv-memo-row .pv-activity-desc { color:#7a1a1a; }
 .pv-link { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--accent); text-decoration:none; border:1px solid rgba(200,134,10,.3); padding:3px 10px; border-radius:2px; font-family:var(--font-mono); width:fit-content; }
 .pv-link:hover { background:var(--accent-light); }
 .pv-img-wrap { width:100%; }
@@ -262,7 +268,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <header>
   <div class="logo">Samos<span>◆</span>Planning</div>
-  <span class="version-badge">v2.7</span>
+  <span class="version-badge">v2.9</span>
   <div class="header-center">
     <input class="doc-title-input" id="docTitle" type="text" placeholder="Nom du document…" value="Samos — Été 2025">
 <input class="doc-title-input title-img-input" id="titleImgUrl" type="text" placeholder="🖼 URL image (optionnel)…">
@@ -288,6 +294,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
       <option value="activity">🎯 Activité</option>
       <option value="link">🔗 Lien</option>
       <option value="image">🖼 Image</option>
+      <option value="memo">🔴 Mémo</option>
     </select>
     <button class="block-adder-add" id="btnAddBlock">+ Ajouter</button>
   </div>
@@ -343,7 +350,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  var VERSION = '2.7';
+  var VERSION = '2.9';
 
   /* ── state ── */
   var blocks = [];
@@ -355,6 +362,7 @@ document.addEventListener("DOMContentLoaded", function() {
   var DEFAULTS = {
     day:         { type:'day',         label:'', date:'' },
     activity:    { type:'activity',     time:'',  duration:'', text:'' },
+    memo:        { type:'memo',          time:'',  duration:'', text:'' },
     link:        { type:'link',        label:'', url:'' },
     image:       { type:'image',       url:'',   caption:'', alt:'' }
   };
@@ -362,6 +370,7 @@ document.addEventListener("DOMContentLoaded", function() {
   var META = {
     day:         { label:'JOUR',        color:'type-day' },
     activity:    { label:'ACTIVITÉ',    color:'type-activity' },
+    memo:        { label:'MÉMO',         color:'type-memo' },
     link:        { label:'LIEN',        color:'type-link' },
     image:       { label:'IMAGE',       color:'type-image' }
   };
@@ -449,7 +458,7 @@ document.addEventListener("DOMContentLoaded", function() {
   /* ── preview text (editor badge) ── */
   function preview(b) {
     if (b.type === 'day')         return b.date ? formatDate(b.date).slice(0, 20) + (b.label ? ' · ' + b.label : '') : b.label || '(jour vide)';
-    if (b.type === 'activity')    return (b.time || '--:--') + (b.duration ? ' · ' + b.duration : '') + (b.text ? ' — ' + b.text.slice(0, 40) + (b.text.length > 40 ? '…' : '') : '');
+    if (b.type === 'activity' || b.type === 'memo') return (b.time || '--:--') + (b.duration ? ' · ' + b.duration : '') + (b.text ? ' — ' + b.text.slice(0, 40) + (b.text.length > 40 ? '…' : '') : '');
     if (b.type === 'link')        return b.label || b.url || '(lien vide)';
     if (b.type === 'image')       return b.caption || b.url || '(image vide)';
     return '';
@@ -466,7 +475,7 @@ document.addEventListener("DOMContentLoaded", function() {
         '<input class="field-input" type="text" data-id="' + id + '" data-field="label" value="' + esc(b.label) + '" placeholder="Ex: Arrivée à Nice"></div>' +
       '</div>'
     );
-    if (b.type === 'activity') return (
+    if (b.type === 'activity' || b.type === 'memo') return (
       '<div class="field-row">' +
         '<div class="field-group"><label class="field-label">Heure</label>' +
         '<input class="field-input" type="time" data-id="' + id + '" data-field="time" value="' + esc(b.time) + '"></div>' +
@@ -731,6 +740,8 @@ document.addEventListener("DOMContentLoaded", function() {
       var code = g('jsonCode');
       code.innerHTML = blocks.length ? syntaxHL(buildJSON()) : '<span style="color:#555">// Ajoutez des blocs pour générer le JSON</span>';
     }
+    // Auto-save to localStorage
+    saveToStorage();
   }
 
   // switchTab removed — preview always on, JSON only in edit mode
@@ -823,7 +834,8 @@ document.addEventListener("DOMContentLoaded", function() {
     if (pendingImport.meta && pendingImport.meta.title) g('docTitle').value = pendingImport.meta.title;
     activeId = null;
     render(); sync(); closeImport();
-    toast('Importé — ' + blocks.length + ' bloc(s)', 'ok');
+    saveToStorage();
+    toast('Importé et sauvegardé — ' + blocks.length + ' bloc(s)', 'ok');
   });
 
   /* ── toast ── */
@@ -924,8 +936,9 @@ document.addEventListener("DOMContentLoaded", function() {
         while (i < blocks.length && blocks[i].type !== 'day') {
           var cb = blocks[i];
 
-          if (cb.type === 'activity') {
-            var row = mk('div', 'pv-activity-row');
+          if (cb.type === 'activity' || cb.type === 'memo') {
+            var isMemo = cb.type === 'memo';
+            var row = mk('div', isMemo ? 'pv-activity-row pv-memo-row' : 'pv-activity-row');
             /* time column */
             var tc = mk('div', 'pv-time');
             var tv = mk('div', 'pv-time-val'); tv.textContent = cb.time || '—'; tc.appendChild(tv);
@@ -971,6 +984,38 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
+  /* ── localStorage persistence ── */
+  var STORAGE_KEY = 'samos-planning-doc';
+
+  function saveToStorage() {
+    try {
+      var data = {
+        title: g('docTitle').value,
+        titleImg: g('titleImgUrl') ? g('titleImgUrl').value : '',
+        blocks: blocks.map(function(b) {
+          var o = {}; Object.keys(b).forEach(function(k) { o[k] = b[k]; }); return o;
+        })
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch(e) { /* silently fail if storage unavailable */ }
+  }
+
+  function loadFromStorage() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      var data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.blocks)) return false;
+      blocks = data.blocks.map(function(b) {
+        if (!b.id) b.id = uid();
+        return b;
+      });
+      if (data.title) g('docTitle').value = data.title;
+      if (data.titleImg && g('titleImgUrl')) g('titleImgUrl').value = data.titleImg;
+      return true;
+    } catch(e) { return false; }
+  }
+
   /* ── demo data ── */
   blocks = [
     { id:uid(), type:'day',      date:'2025-07-15', label:'Arrivée à Nice' },
@@ -985,8 +1030,15 @@ document.addEventListener("DOMContentLoaded", function() {
     { id:uid(), type:'image',    url:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Monte_carlo_casino_2019.jpg/1280px-Monte_carlo_casino_2019.jpg', caption:'Casino de Monte-Carlo', alt:'Casino de Monte-Carlo' }
   ];
 
+  // Load from localStorage, fall back to demo data
+  var loaded = loadFromStorage();
+  if (!loaded) {
+    // demo data already set above
+  }
+
   render();
   sync();
+  if (loaded) toast('Document chargé', 'ok');
 
 });
 </script>
