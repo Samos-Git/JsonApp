@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Samos Planning v2.9</title>
+<title>Samos Planning v3.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -98,6 +98,16 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 .blocks-list { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:7px; position:relative; z-index:2; min-height:0; height:100%; }
 
 /* ── BLOCK CARD ── */
+/* ── BLOCK GROUPS ── */
+.block-group { margin-bottom:8px; }
+.block-group-header { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#484ddb; color:#fff; font-size:11px; font-weight:700; letter-spacing:.5px; cursor:pointer; user-select:none; border-radius:4px; }
+.block-group-header:hover { background:#3a3fc0; }
+.block-group-chevron { font-size:10px; transition:transform .2s; margin-left:auto; opacity:.8; }
+.block-group-header.collapsed .block-group-chevron { transform:rotate(-90deg); }
+.block-group-count { font-size:10px; opacity:.65; font-weight:400; white-space:nowrap; }
+.block-group-body { padding-left:12px; border-left:3px solid #484ddb; margin-top:2px; }
+.block-group-body.collapsed { display:none; }
+
 .block-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; overflow:hidden; transition:border-color .15s; animation:slideIn .18s ease; box-shadow:var(--shadow); flex-shrink:0; }
 @keyframes slideIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
 .block-card:hover { border-color:var(--border-strong); }
@@ -268,7 +278,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <header>
   <div class="logo">Samos<span>◆</span>Planning</div>
-  <span class="version-badge">v2.9</span>
+  <span class="version-badge">v3.0</span>
   <div class="header-center">
     <input class="doc-title-input" id="docTitle" type="text" placeholder="Nom du document…" value="Samos — Été 2025">
 <input class="doc-title-input title-img-input" id="titleImgUrl" type="text" placeholder="🖼 URL image (optionnel)…">
@@ -350,7 +360,7 @@ header { display:flex; align-items:center; padding:0 20px; height:52px; border-b
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  var VERSION = '2.9';
+  var VERSION = '3.0';
 
   /* ── state ── */
   var blocks = [];
@@ -505,16 +515,37 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   /* ── render editor ── */
+  var collapsedGroups = {}; // dayBlockId -> true if group collapsed
+
+  function blockCard(b, i, openState) {
+    var on = b.id === activeId;
+    var isOpen = (b.id in openState) ? openState[b.id] : on;
+    var m = META[b.type];
+    var badge = (b.type === 'day' && b.date) ? formatDate(b.date).slice(0, 16) : m.label;
+    return '<div class="block-card' + (on ? ' active' : '') + '" data-id="' + b.id + '">' +
+      '<div class="block-header" data-action="toggle" data-id="' + b.id + '">' +
+      '<span class="block-handle" draggable="true" data-drag="true" data-id="' + b.id + '">⠿</span>' +
+      '<span class="block-type-badge ' + m.color + '">' + esc(badge) + '</span>' +
+      '<span class="block-preview-text">' + esc(preview(b)) + '</span>' +
+      '<div class="block-actions">' +
+      (i > 0 ? '<button class="block-action-btn" data-action="up" data-id="' + b.id + '">↑</button>' : '') +
+      (i < blocks.length - 1 ? '<button class="block-action-btn" data-action="down" data-id="' + b.id + '">↓</button>' : '') +
+      '<button class="block-action-btn" data-action="dup" data-id="' + b.id + '">⎘</button>' +
+      '<button class="block-action-btn del" data-action="del" data-id="' + b.id + '">✕</button>' +
+      '</div></div>' +
+      '<div class="block-body' + (isOpen ? '' : ' collapsed') + '">' + fields(b) + '<button class="btn-validate" data-action="validate" data-id="' + b.id + '">Valider</button></div>' +
+      '</div>';
+  }
+
   function render() {
     var list  = g('blocksList');
     var empty = g('emptyState');
     g('blockCount').textContent = blocks.length + ' bloc(s)';
     empty.style.display = blocks.length === 0 ? 'flex' : 'none';
-
     if (blocks.length === 0) { list.innerHTML = ''; return; }
 
-    // Snapshot open/closed state of every visible block before rebuilding
-    var openState = {}; // id -> true (open) or false (collapsed)
+    // Snapshot open/closed state
+    var openState = {};
     var existing = list.querySelectorAll('.block-card');
     for (var e = 0; e < existing.length; e++) {
       var eid = existing[e].getAttribute('data-id');
@@ -522,31 +553,60 @@ document.addEventListener("DOMContentLoaded", function() {
       openState[eid] = body ? !body.classList.contains('collapsed') : false;
     }
 
-    var html = '';
+    // Build groups: each 'day' block starts a new group
+    var groups = []; // [{dayBlock, children:[]}]
+    var currentGroup = null;
     for (var i = 0; i < blocks.length; i++) {
-      var b = blocks[i], m = META[b.type];
-      var on = b.id === activeId;
-      // Known block: restore its state. New block: open only if it's the active one.
-      var isOpen = (b.id in openState) ? openState[b.id] : on; // known: restore; new: open only if active
-      var badge = (b.type === 'day' && b.date) ? formatDate(b.date).slice(0, 16) : m.label;
-      html +=
-        '<div class="block-card' + (on ? ' active' : '') + '" data-id="' + b.id + '">' +
-        '<div class="block-header" data-action="toggle" data-id="' + b.id + '">' +
-        '<span class="block-handle" draggable="true" data-drag="true" data-id="' + b.id + '">⠿</span>' +
-        '<span class="block-type-badge ' + m.color + '">' + esc(badge) + '</span>' +
-        '<span class="block-preview-text">' + esc(preview(b)) + '</span>' +
-        '<div class="block-actions">' +
-        (i > 0 ? '<button class="block-action-btn" data-action="up" data-id="' + b.id + '">↑</button>' : '') +
-        (i < blocks.length - 1 ? '<button class="block-action-btn" data-action="down" data-id="' + b.id + '">↓</button>' : '') +
-        '<button class="block-action-btn" data-action="dup" data-id="' + b.id + '">⎘</button>' +
-        '<button class="block-action-btn del" data-action="del" data-id="' + b.id + '">✕</button>' +
-        '</div></div>' +
-        '<div class="block-body' + (isOpen ? '' : ' collapsed') + '">' + fields(b) + '<button class="btn-validate" data-action="validate" data-id="' + b.id + '">Valider</button></div>' +
-        '</div>';
+      var b = blocks[i];
+      if (b.type === 'day') {
+        currentGroup = { dayBlock: b, dayIdx: i, children: [] };
+        groups.push(currentGroup);
+      } else if (currentGroup) {
+        currentGroup.children.push({ block: b, idx: i });
+      } else {
+        // Blocks before any day — ungrouped
+        if (!groups.length || groups[0].dayBlock) {
+          groups.unshift({ dayBlock: null, dayIdx: -1, children: [] });
+        }
+        groups[0].children.push({ block: b, idx: i });
+      }
     }
+
+    var html = '';
+    for (var g2 = 0; g2 < groups.length; g2++) {
+      var grp = groups[g2];
+      var grpCollapsed = grp.dayBlock ? !!collapsedGroups[grp.dayBlock.id] : false;
+      var childCount = grp.children.length;
+
+      if (grp.dayBlock) {
+        // Group with day header
+        var dayLabel = (grp.dayBlock.date ? formatDate(grp.dayBlock.date).slice(0, 16) : '') + (grp.dayBlock.label ? ' — ' + grp.dayBlock.label : '');
+        html += '<div class="block-group">';
+        html += '<div class="block-group-header' + (grpCollapsed ? ' collapsed' : '') + '" data-action="toggle-group" data-group-id="' + grp.dayBlock.id + '">' +
+          '<span class="block-group-label">📅 ' + esc(dayLabel) + '</span>' +
+          '<span class="block-group-count">' + childCount + ' bloc(s)</span>' +
+          '<span class="block-group-chevron">▾</span>' +
+          '</div>';
+        // Day block card itself (always visible, outside group body)
+        html += blockCard(grp.dayBlock, grp.dayIdx, openState);
+        // Children
+        html += '<div class="block-group-body' + (grpCollapsed ? ' collapsed' : '') + '" data-group-body="' + grp.dayBlock.id + '">';
+        for (var c = 0; c < grp.children.length; c++) {
+          html += blockCard(grp.children[c].block, grp.children[c].idx, openState);
+        }
+        html += '</div></div>';
+      } else {
+        // Ungrouped blocks (before first day)
+        html += '<div class="ungrouped-blocks">';
+        for (var c2 = 0; c2 < grp.children.length; c2++) {
+          html += blockCard(grp.children[c2].block, grp.children[c2].idx, openState);
+        }
+        html += '</div>';
+      }
+    }
+
     list.innerHTML = html;
     attachDragHandles();
-    // field input handled by delegation on blocksList
   }
 
   /* ── drag & drop reorder ── */
@@ -635,6 +695,16 @@ document.addEventListener("DOMContentLoaded", function() {
         var id = el.getAttribute('data-id');
         e.stopPropagation();
         if (a === 'toggle') setActive(id);
+        if (a === 'toggle-group') {
+          var gid = el.getAttribute('data-group-id');
+          collapsedGroups[gid] = !collapsedGroups[gid];
+          // Toggle DOM directly without full render
+          var hdr = el.closest ? el.closest('.block-group-header') : el;
+          hdr.classList.toggle('collapsed', collapsedGroups[gid]);
+          var body = document.querySelector('.block-group-body[data-group-body="' + gid + '"]');
+          if (body) body.classList.toggle('collapsed', collapsedGroups[gid]);
+          return;
+        }
         if (a === 'validate') {
           sync();
           // Flash the button green briefly
